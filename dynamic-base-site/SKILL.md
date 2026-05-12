@@ -1,0 +1,108 @@
+---
+name: dynamic-silverstripe-base-site
+description: Dynamic's Silverstripe base-site stack patterns - key modules, namespaces, and upgrade considerations
+---
+
+# Dynamic Silverstripe Base-Site Stack
+
+This skill documents the Dynamic base-site module ecosystem used in Silverstripe projects.
+
+## Core Modules
+
+| Package | Purpose |
+|---------|---------|
+| `dynamic/recipe-silverstripe-base-site` | Meta-package that bundles all base-site dependencies |
+| `dynamic/silverstripe-base-site` | Core page types, models, and extensions |
+| `dynamic/silverstripe-site-tools` | Shared utilities, extensions, and helper classes |
+
+## Namespace Changes by Version
+
+### Silverstripe 5 (dynamic/silverstripe-base-site:^7)
+- Namespace: `Dynamic\BaseRecipe\*` (some classes)
+- Namespace: `Dynamic\Base\*` (page types, models)
+- Namespace: `Dynamic\SiteTools\*` (extensions, utilities)
+
+### Silverstripe 4 (dynamic/silverstripe-base-site:^4)
+- Namespace: `Dynamic\Base\*` (all classes)
+
+## Common Extensions
+
+Extensions may move between `silverstripe-base-site` and `silverstripe-site-tools` in major versions:
+
+| Extension | SS5 Location | Notes |
+|-----------|--------------|-------|
+| `TemplateDataExtension` | `Dynamic\Base\Extension` | For SiteConfig |
+| `ReviewContentDataExtension` | `Dynamic\SiteTools\Extension` | For SiteConfig |
+| `CmsDesignDataExtension` | `Dynamic\Base\Extension` | For SiteTree |
+| `SeoExtension` | `Dynamic\Base\Extension` | For SiteTree |
+| `HeaderImageExtension` | `Dynamic\SiteTools\Extension` | For pages needing header images |
+| `PreviewExtension` | `Dynamic\SiteTools\Extension` | For BlogPost |
+| `DataobjectPermissionExtension` | `Dynamic\SiteTools\Extension` | For UserForms |
+| `ContactDataExtension` | `Dynamic\SiteTools\Extension` | For CompanyAddress |
+
+## Configuration Patterns
+
+### base-site-config.yml (project)
+Should closely mirror the recipe's version. Contains:
+- SiteConfig extensions
+- SiteTree extensions  
+- Page type configurations (elemental, etc.)
+
+### mysite.yml (project)
+Contains project-specific customizations:
+- Project-specific extensions (FlexSlider, etc.)
+- Custom element configurations
+- Third-party module configs
+
+## Upgrade Checklist
+
+When upgrading major versions:
+
+1. **Check Recipe Config**: View the recipe's `app/_config/base-site-config.yml` to understand SS5 patterns
+   ```bash
+   cat vendor/dynamic/recipe-silverstripe-base-site/app/_config/base-site-config.yml
+   ```
+
+2. **Verify Extension Locations**: Extensions may move between modules
+   ```bash
+   grep -r "class ExtensionName" vendor/dynamic/silverstripe-*/src/
+   ```
+
+3. **Check for Removed Extensions**: Some custom extensions get replaced by third-party modules
+   - `CompanyDataExtension` - removed in SS5
+   - `IntegrationsDataExtension` - removed in SS5
+
+4. **Namespace Updates**: Check for namespace changes
+   - `Dynamic\Base` → `Dynamic\BaseRecipe` in some classes
+
+5. **Third-Party Replacements**: Custom code often gets replaced:
+   - FlexSlider → Carousel (`dynamic/carousel`)
+   - Linkable → LinkField (`silverstripe/linkfield`)
+   - ElementalStylings → removed (use native styles config)
+
+## Common Upgrade Issues
+
+### Missing Extension Errors
+```
+InvalidArgumentException: ClassName references nonexistent Extension in 'extensions'
+```
+**Solution**: Check if extension moved to different module or was removed. Search vendor:
+```bash
+grep -r "class ExtensionName" vendor/dynamic/
+```
+
+### has_many Relation Errors
+```
+No has_one found on class 'X', the has_many relation from 'Y' to 'X' requires a has_one
+```
+**Solution**: Add reciprocal has_one via config in mysite.yml:
+```yaml
+Namespace\ClassName:
+  has_one:
+    ParentClass: Namespace\ParentClass
+```
+
+### Deprecated Packages
+- `ryanpotter/silverstripe-cms-theme` - SS5 has built-in CMS theme
+- `lekoala/silverstripe-debugbar` - check for SS5 compatible version
+- `fractas/elemental-stylings` - use native `styles` config instead
