@@ -1,0 +1,143 @@
+# Complex Template: 3-Column Pricing Tiers
+# Demonstrates multiple elements with links and styling
+
+# Define links for pricing buttons
+SilverStripe\LinkField\Models\ExternalLink:
+  pricingBasicLink:
+    LinkText: 'Get Started'
+    OpenInNew: false
+    ExternalUrl: '#basic'
+
+  pricingProLink:
+    LinkText: 'Start Free Trial'
+    OpenInNew: false
+    ExternalUrl: '#professional'
+
+  pricingEnterpriseLink:
+    LinkText: 'Contact Sales'
+    OpenInNew: false
+    ExternalUrl: '#enterprise'
+
+# Preview image
+SilverStripe\Assets\Image:
+  pricingPreview:
+    PopulateFileFrom: 'vendor/dynamic/recipe-silverstripe-essentials-fixtures/app/fixtures/images/previews/pricing.jpg'
+    Filename: 'assets/Templates/Pricing/pricing-preview.jpg'
+    Title: 'Pricing Template Preview'
+    PopulateMergeMatch:
+      - Title
+
+# Container
+DNADesign\Elemental\Models\ElementalArea:
+  area_pricing_tiers:
+    OwnerClassName: 'Dynamic\ElementalTemplates\Models\Template'
+
+# Row with light background
+WeDevelop\ElementalGrid\Models\ElementRow:
+  row_pricing:
+    Title: 'Pricing Container'
+    ShowTitle: false
+    AvailableGlobally: false
+    IsFluid: false
+    BackgroundStyle: 'bg-light'
+    ContainerStyle: 'container'
+    VerticalPadding: 'py-5'
+    Parent: =>DNADesign\Elemental\Models\ElementalArea.area_pricing_tiers
+    Sort: 1
+
+# Header content
+DNADesign\Elemental\Models\ElementContent:
+  pricing_header:
+    Title: 'Choose Your Plan'
+    ShowTitle: true
+    TitleTag: 'h2'
+    AvailableGlobally: false
+    HTML: '<p class="lead text-center">Select the perfect plan for your needs. All plans include a 30-day money-back guarantee.</p>'
+    SizeMD: '12'
+    ContentAlign: 'Center'
+    Parent: =>DNADesign\Elemental\Models\ElementalArea.area_pricing_tiers
+    Sort: 2
+
+# Basic tier card
+Dynamic\Elements\Card\Elements\ElementCard:
+  pricing_basic:
+    Title: 'Basic'
+    ShowTitle: true
+    AvailableGlobally: false
+    TopTitle: '$29/mo'
+    TitleTag: 'h3'
+    Content: |
+      <ul>
+        <li>5 Projects</li>
+        <li>10GB Storage</li>
+        <li>Email Support</li>
+        <li>Basic Analytics</li>
+      </ul>
+    BackgroundColor: '#FFFFFF'
+    ButtonColor: 'Primary'
+    Position: 'Top'
+    SizeMD: '4'
+    ContentAlign: 'Center'
+    ElementLink: =>SilverStripe\LinkField\Models\ExternalLink.pricingBasicLink
+    Parent: =>DNADesign\Elemental\Models\ElementalArea.area_pricing_tiers
+    Sort: 3
+
+# Professional tier card (highlighted)
+Dynamic\Elements\Card\Elements\ElementCard:
+  pricing_professional:
+    Title: 'Professional'
+    ShowTitle: true
+    AvailableGlobally: false
+    TopTitle: '$79/mo'
+    TitleTag: 'h3'
+    Content: |
+      <ul>
+        <li>Unlimited Projects</li>
+        <li>100GB Storage</li>
+        <li>Priority Support</li>
+        <li>Advanced Analytics</li>
+        <li>API Access</li>
+      </ul>
+    BackgroundColor: '#CCBEF5'
+    ButtonColor: 'Purple'
+    Position: 'Top'
+    SizeMD: '4'
+    ContentAlign: 'Center'
+    ElementLink: =>SilverStripe\LinkField\Models\ExternalLink.pricingProLink
+    Parent: =>DNADesign\Elemental\Models\ElementalArea.area_pricing_tiers
+    Sort: 4
+
+# Enterprise tier card
+Dynamic\Elements\Card\Elements\ElementCard:
+  pricing_enterprise:
+    Title: 'Enterprise'
+    ShowTitle: true
+    AvailableGlobally: false
+    TopTitle: 'Custom'
+    TitleTag: 'h3'
+    Content: |
+      <ul>
+        <li>Everything in Pro</li>
+        <li>Unlimited Storage</li>
+        <li>24/7 Phone Support</li>
+        <li>Custom Integrations</li>
+        <li>Dedicated Manager</li>
+      </ul>
+    BackgroundColor: '#F2E8E3'
+    ButtonColor: 'Yellow'
+    Position: 'Top'
+    SizeMD: '4'
+    ContentAlign: 'Center'
+    ElementLink: =>SilverStripe\LinkField\Models\ExternalLink.pricingEnterpriseLink
+    Parent: =>DNADesign\Elemental\Models\ElementalArea.area_pricing_tiers
+    Sort: 5
+
+# Template definition
+Dynamic\ElementalTemplates\Models\Template:
+  template_pricing_tiers:
+    Title: 'Pricing Tiers (3 Column)'
+    PageType: 'Dynamic\Base\Page\BlockPage'
+    Elements: =>DNADesign\Elemental\Models\ElementalArea.area_pricing_tiers
+    LayoutImage: =>SilverStripe\Assets\Image.pricingPreview
+    PopulateMergeMatch:
+      - Title
