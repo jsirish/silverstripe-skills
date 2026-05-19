@@ -79,15 +79,9 @@ Before `dev/build` can succeed, you must resolve SS3 legacy schema blockers.
 > ```
 
 > [!WARNING]
-> **__TEMP__ Table Collisions**: SS4 dev/build creates `__TEMP__` tables to migrate data. If a previous run crashed, orphaned temp tables will block table renames. You must iteratively drop them.
-> ```bash
-> # Loop to clear orphaned temp tables until success:
-> ddev exec "mysql -udb -pdb db -s -N -e \
->   \"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='db' AND TABLE_NAME LIKE '__TEMP__%';\"" \
->   2>/dev/null | while read tbl; do
->     ddev exec "mysql -udb -pdb db -e \"DROP TABLE IF EXISTS \\\`$tbl\\\`;\""
-> done
-> ```
+> **__TEMP__ and _Versions Table Collisions**: SS4 dev/build creates `__TEMP__` tables to migrate data. SS3 `_Versions` tables from the source DB collide with SS4's rename target. On every fresh prod sync (and after any crashed dev/build), drop both kinds in a single statement before re-running dev/build.
+>
+> See [references/db-rebuild-conflicts.md](references/db-rebuild-conflicts.md) for the bulk-drop snippet and edge cases. The TL;DR: a single `DROP TABLE IF EXISTS \`a\`,\`b\`,\`c\`,...;` statement is dramatically faster than the per-table loop you'll find in older guides.
 
 ## Phase 6: Data Migration Tasks
 
@@ -115,6 +109,8 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
    ```
    *Note: Dev/build renames obsolete classes to `_obsolete_PromoObject`. The custom task must read from these `_obsolete_` tables via `DB::query()` and write to Elemental tables.*
 
+   See [references/block-to-elemental-migration.md](references/block-to-elemental-migration.md) for the canonical block-migration task architecture, covering: `$segment` + dry-run, ExtraClass-marker idempotency, Versioned writes (draft + `_Live` + `_Versions`), `ElementalArea_Live` publishing, `Page_Live` FK sync, shared-block handling, and CSS scope-class compatibility.
+
 ## Phase 7: Templates & Front-End
 
 - **Variables**: Update `$Link` to `$URL` in template `.ss` files.
@@ -136,3 +132,15 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 
 > [!IMPORTANT]
 > **Image Resize Methods**: `jonom/focuspoint` is rarely carried over to SS4. Update template tags from `$Image.FocusFill()` to `$Image.Fill(X, Y)` or native SS4 crop functions.
+
+> [!WARNING]
+> **ElementalArea_Live is empty after dev/build**: SS4 `dev/build` creates `ElementalArea` rows on the **draft** table only. Elements you placed during migration won't appear on the frontend until both `ElementalArea_Live` and `Page_Live.ElementalAreaID` are populated. The block migration task must end with these two SQL passes (see [references/block-to-elemental-migration.md](references/block-to-elemental-migration.md)).
+
+> [!WARNING]
+> **Versioned writes need _Live AND _Versions**: When inserting Elements via raw SQL, write to all three tables: base draft, `_Live`, and `_Versions`. Skipping `_Versions` causes "no history" errors when editing in the CMS and can cause `publish()` to silently strip the record from `_Live`. See the `insertVersionedRow()` pattern in [references/block-to-elemental-migration.md](references/block-to-elemental-migration.md).
+
+> [!TIP]
+> **Legacy CSS still works if you keep the old class**: SS3 themes scope CSS to block class names (`.pagesectionblock`, `.promoblock`, etc.). Elemental's `$CSSClasses` outputs `element app__elements__elementpagesection` instead. To retain existing CSS during migration, add the legacy class to the Elemental wrapper template: `<div class="$CSSClasses pagesectionblock">`. Defer full CSS rewrite until after migration is verified.
+
+> [!WARNING]
+> **JS-dependent CSS will collapse**: SS3 themes often use JavaScript to set fixed heights on block containers, then position child elements absolutely within them. With the JS gone, `position: absolute` children leave the parent at height 0 and the layout collapses. When migrating, remove `vert-centering` (or equivalent) classes from element templates — don't try to revive the JS.
