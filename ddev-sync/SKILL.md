@@ -34,7 +34,7 @@ Verify the following before proceeding:
 
 1. **Project has DDEV configuration:**
    ```bash
-   test -f ddev/.ddev.yaml || test -f .ddev/config.yaml
+   test -f .ddev/config.yaml
    ```
 2. **Sync script exists** in project root:
    ```bash
