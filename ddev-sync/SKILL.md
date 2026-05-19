@@ -40,10 +40,7 @@ Verify the following before proceeding:
    ```bash
    test -f sync.sh
    ```
-3. **Dev build script exists** (falls back to `ddev sake dev/build`):
-   ```bash
-   test -f devbuild.sh
-   ```
+3. **Dev build script** (optional — falls back to `ddev sake dev/build` if not present).
 
 ---
 
@@ -84,8 +81,12 @@ Verify the following before proceeding:
 
 6. **Run the dev build** (flushes caches, rebuilds database):
    ```bash
-   # Use devbuild.sh if available, otherwise run the standard DDEV build command
-   test -f devbuild.sh && ddev exec ./devbuild.sh || ddev exec sake dev/build
+   # Use devbuild.sh if available, otherwise run the standard build command
+   if test -f devbuild.sh; then
+     ddev exec ./devbuild.sh
+   else
+     ddev sake dev/build
+   fi
    ```
 
 ---
@@ -107,4 +108,4 @@ Verify the following before proceeding:
 | SSH auth fails inside container | Run `ddev auth ssh` again and verify keys are loaded |
 | Sync script not found | Verify `sync.sh` exists in project root |
 | Assets appear broken after sync | Run `ddev composer vendor-expose` and check file permissions |
-| Changes not appearing after sync | Append `?flush=all` to URL or run `ddev exec ./devbuild.sh flush=1` |
+| Changes not appearing after sync | Append `?flush=all` to URL, or run `ddev exec ./devbuild.sh flush=1` if `devbuild.sh` exists (otherwise `ddev sake dev/build "flush=1"`) |
