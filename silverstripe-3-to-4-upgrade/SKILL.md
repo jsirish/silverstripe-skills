@@ -109,7 +109,7 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
    ```
    *Note: Dev/build renames obsolete classes to `_obsolete_PromoObject`. The custom task must read from these `_obsolete_` tables via `DB::query()` and write to Elemental tables.*
 
-   See [references/block-to-elemental-migration.md](references/block-to-elemental-migration.md) for the canonical block-migration task architecture, covering: `$segment` + dry-run, ExtraClass-marker idempotency, Versioned writes (draft + `_Live` + `_Versions`), `ElementalArea_Live` publishing, `Page_Live` FK sync, shared-block handling, and CSS scope-class compatibility.
+   **➡ Use the dedicated [block-to-element-migration](../block-to-element-migration/SKILL.md) skill** for the full workflow: discovery, page-model setup, the migration-task skeleton, the legacy-template → element-template duplication pattern, the area-suffix template convention (`Element_RelationName.ss`), and verification. The earlier inline reference at [references/block-to-elemental-migration.md](references/block-to-elemental-migration.md) is preserved as the seed material the new skill was distilled from.
 
 ## Phase 7: Templates & Front-End
 
@@ -134,10 +134,10 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 > **Image Resize Methods**: `jonom/focuspoint` is rarely carried over to SS4. Update template tags from `$Image.FocusFill()` to `$Image.Fill(X, Y)` or native SS4 crop functions.
 
 > [!WARNING]
-> **ElementalArea_Live is empty after dev/build**: SS4 `dev/build` creates `ElementalArea` rows on the **draft** table only. Elements you placed during migration won't appear on the frontend until both `ElementalArea_Live` and `Page_Live.ElementalAreaID` are populated. The block migration task must end with these two SQL passes (see [references/block-to-elemental-migration.md](references/block-to-elemental-migration.md)).
+> **ElementalArea_Live is empty after dev/build**: SS4 `dev/build` creates `ElementalArea` rows on the **draft** table only. Elements you placed during migration won't appear on the frontend until both `ElementalArea_Live` and `Page_Live.ElementalAreaID` are populated. The block migration task must end with these two SQL passes. Full pattern: [block-to-element-migration](../block-to-element-migration/SKILL.md).
 
 > [!WARNING]
-> **Versioned writes need _Live AND _Versions**: When inserting Elements via raw SQL, write to all three tables: base draft, `_Live`, and `_Versions`. Skipping `_Versions` causes "no history" errors when editing in the CMS and can cause `publish()` to silently strip the record from `_Live`. See the `insertVersionedRow()` pattern in [references/block-to-elemental-migration.md](references/block-to-elemental-migration.md).
+> **Versioned writes need _Live AND _Versions**: When inserting Elements via raw SQL, write to all three tables: base draft, `_Live`, and `_Versions`. Skipping `_Versions` causes "no history" errors when editing in the CMS and can cause `publish()` to silently strip the record from `_Live`. See the `insertVersionedRow()` helper in [block-to-element-migration/references/migration-task-skeleton.md](../block-to-element-migration/references/migration-task-skeleton.md).
 
 > [!TIP]
 > **Legacy CSS still works if you keep the old class**: SS3 themes scope CSS to block class names (`.pagesectionblock`, `.promoblock`, etc.). Elemental's `$CSSClasses` outputs `element app__elements__elementpagesection` instead. To retain existing CSS during migration, add the legacy class to the Elemental wrapper template: `<div class="$CSSClasses pagesectionblock">`. Defer full CSS rewrite until after migration is verified.

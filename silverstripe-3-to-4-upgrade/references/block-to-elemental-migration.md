@@ -1,5 +1,13 @@
 # Block → Elemental Migration (SS3 → SS4)
 
+> **➡ Superseded by the dedicated [block-to-element-migration](../../block-to-element-migration/SKILL.md) skill.**
+>
+> This document is preserved as the seed material the new skill was distilled from. For the canonical workflow, the migration-task skeleton, the template-parity pattern, and the area-suffix template convention, use the new skill.
+>
+> The content below is still accurate but only covers the migration-task half (not the template-parity half) and doesn't include the area-suffix template mechanism.
+
+---
+
 Detailed patterns for migrating `sheadawson/silverstripe-blocks` or `dynamic/dynamic-blocks` to `dnadesign/silverstripe-elemental` during an SS3→SS4 upgrade. Patterns distilled from rockline-iatric, youth-sailing, and sheboygan-safeharbor migrations.
 
 ## Architecture: one task or two?
