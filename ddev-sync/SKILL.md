@@ -40,7 +40,7 @@ Verify the following before proceeding:
    ```bash
    test -f sync.sh
    ```
-3. **Dev build script exists** (if applicable):
+3. **Dev build script exists** (falls back to `ddev sake dev/build`):
    ```bash
    test -f devbuild.sh
    ```
@@ -73,6 +73,8 @@ Verify the following before proceeding:
 
 ### Phase 2: Sync Remote Data
 
+> **⚠️ WARNING:** `sync.sh` will **drop and overwrite** your local database and assets with production data. Any local content changes (uncommitted DB changes, uploaded files) will be **permanently lost**. Ensure you've committed any work-in-progress before proceeding.
+
 5. **Sync remote database and assets** (will prompt for confirmation — answer `Y`):
    ```bash
    ddev exec ./sync.sh
@@ -80,9 +82,10 @@ Verify the following before proceeding:
 
 ### Phase 3: Rebuild Dev Environment
 
-6. **Run the dev build script** (flushes caches, rebuilds database):
+6. **Run the dev build** (flushes caches, rebuilds database):
    ```bash
-   ddev exec ./devbuild.sh
+   # Use devbuild.sh if available, otherwise run the standard DDEV build command
+   test -f devbuild.sh && ddev exec ./devbuild.sh || ddev exec sake dev/build
    ```
 
 ---
