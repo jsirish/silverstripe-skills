@@ -44,7 +44,7 @@ For every package **removed** from `require`, document:
 
 | SS3 Package | What it provided | SS4 situation |
 |-------------|-----------------|---------------|
-| `silverstripe/widgets` | Blog sidebar widgets (archive, tags, categories, recent posts) | **Dropped entirely** in `silverstripe/blog ^3.0`. Sidebar features must be rebuilt as Elemental blocks or removed. |
+| `silverstripe/widgets` | Blog sidebar widgets (archive, tags, categories, recent posts) | `silverstripe/blog ^3.x` still supports widgets — use `silverstripe/widgets ^2.x`. Require it explicitly (`composer require silverstripe/widgets "^2.4"`), apply `WidgetPageExtension` to Blog + BlogPost in extensions.yml, and backfill `Widget_Live`/`WidgetArea_Live` tables after prod sync (Widget and Widget_Live have different column order — use explicit column lists). |
 | `sheadawson/silverstripe-blocks` | Arbitrary content blocks on pages | Replace with `dnadesign/silverstripe-elemental`. Requires `BlockMigrationTask`. |
 | `dynamic/dynamic-blocks` | Same as sheadawson blocks, Dynamic flavour | Same as above. |
 | `dynamic/core-tools` | `GlobalSiteSetting`, various helpers | Not available for SS4 — recreate `GlobalSiteSetting` as a custom DataObject. |
@@ -54,7 +54,7 @@ For every package **removed** from `require`, document:
 | `i-lateral/silverstripe-searchable` | Site search | Version `^2.0` available for SS4. |
 
 > [!WARNING]
-> **`silverstripe/widgets` + blog**: If the SS3 site used widgets on any blog/news page sidebar (BlogArchiveWidget, BlogTagsWidget, BlogCategoriesWidget, BlogRecentPostsWidget), those sidebars will be empty after upgrade. SS4 `silverstripe/blog ^3.0` drops widget support. You must replace these with Elemental blocks in the sidebar area — or remove the sidebar. Don't discover this late in the VR process.
+> **`silverstripe/widgets` + blog**: If the SS3 site used blog sidebar widgets, add `silverstripe/widgets ^2.4` to the SS4 project. It is NOT dropped in blog ^3.x — it's optional. After requiring it: (1) apply `WidgetPageExtension` to Blog + BlogPost in extensions.yml, (2) run dev/build, (3) backfill `Widget_Live` and `WidgetArea_Live` from draft tables using explicit column lists (column order differs between draft and live tables). Don't rely on `INSERT INTO _Live SELECT * FROM table` — it silently corrupts data.
 
 ### 1b. Legacy ddev instance
 
