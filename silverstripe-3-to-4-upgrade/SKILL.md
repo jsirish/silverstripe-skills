@@ -16,7 +16,7 @@ Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe
 
 | Phase | Key Actions |
 |-------|-------------|
-| **1. Assessment** | Audit SS3 modules, plan block-to-elemental migration |
+| **1. Assessment** | **Package audit** (`git diff branch-1 -- composer.json`) · spin up legacy ddev instance · plan block-to-elemental migration |
 | **2. Architecture** | Move `mysite` to `app`, introduce `public` directory |
 | **3. Dependencies** | Update `composer.json` to `^4.0`, update PHP constraints |
 | **4. Namespaces** | Apply PSR-4 namespaces, remap config class names |
@@ -26,6 +26,60 @@ Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe
 | **8. Build & Verify** | `dev/build flush=1`, QA frontend and admin |
 
 ## Phase 1: Assessment & Discovery
+
+### 1a. Package Audit (do this before writing any upgrade code)
+
+Run the composer diff against the legacy branch immediately after branching:
+
+```bash
+git diff branch-1..feature/silverstripe-4-upgrade -- composer.json
+```
+
+For every package **removed** from `require`, document:
+- What feature/UI it provided on the frontend
+- Whether SS4 has a drop-in replacement (`composer show` or packagist)
+- Whether it stored data that needs migrating (DataObject tables in the DB)
+
+**Common removals and their consequences:**
+
+| SS3 Package | What it provided | SS4 situation |
+|-------------|-----------------|---------------|
+| `silverstripe/widgets` | Blog sidebar widgets (archive, tags, categories, recent posts) | **Dropped entirely** in `silverstripe/blog ^3.0`. Sidebar features must be rebuilt as Elemental blocks or removed. |
+| `sheadawson/silverstripe-blocks` | Arbitrary content blocks on pages | Replace with `dnadesign/silverstripe-elemental`. Requires `BlockMigrationTask`. |
+| `dynamic/dynamic-blocks` | Same as sheadawson blocks, Dynamic flavour | Same as above. |
+| `dynamic/core-tools` | `GlobalSiteSetting`, various helpers | Not available for SS4 — recreate `GlobalSiteSetting` as a custom DataObject. |
+| `silverstripe/secureassets` | Protected file storage | Merged into SS4 core (`silverstripe/assets`). No action needed, but verify `.protected/` path. |
+| `heyday/silverstripe-versioneddataobjects` | Versioning for non-Page DataObjects | Replaced by `Versioned` extension (built into SS4). Remove and add `$extensions = [Versioned::class]` manually. |
+| `dynamic/flexslider` | Slider block type | Rebuilt as `ElementPageSection` or similar custom Elemental element. |
+| `i-lateral/silverstripe-searchable` | Site search | Version `^2.0` available for SS4. |
+
+> [!WARNING]
+> **`silverstripe/widgets` + blog**: If the SS3 site used widgets on any blog/news page sidebar (BlogArchiveWidget, BlogTagsWidget, BlogCategoriesWidget, BlogRecentPostsWidget), those sidebars will be empty after upgrade. SS4 `silverstripe/blog ^3.0` drops widget support. You must replace these with Elemental blocks in the sidebar area — or remove the sidebar. Don't discover this late in the VR process.
+
+### 1b. Legacy ddev instance
+
+For any non-trivial upgrade, spin up a parallel local instance of the SS3 branch **before** starting the upgrade:
+
+```bash
+# In a separate directory (e.g. ~/Sites/{project}-legacy)
+git clone <repo> {project}-legacy
+cd {project}-legacy
+git checkout 1  # or whatever the legacy branch is
+ddev config --project-name {project}-legacy --project-type php --php-version 7.4
+ddev start
+ddev auth ssh
+ddev exec ./sync.sh  # sync prod DB and assets
+```
+
+This gives you `https://{project}-legacy.ddev.site` — a running SS3 instance against the same data you're upgrading. Use it to:
+- Confirm what each URL renders on SS3 before starting SS4 work
+- Run VR captures against `{project}-legacy.ddev.site` instead of the live prod URL (eliminates content drift between your DB snapshot and live prod)
+- Diagnose "was this feature even working on prod?" without loading the live site
+
+> [!TIP]
+> The youth-sailing project has a working reference for this pattern: `~/Sites/youth-sailing` (SS4) vs `~/Sites/youth-sailing-legacy` (SS3). Use it as a template for the ddev config setup.
+
+### 1c. Package Assessment (original step)
 
 1. **Audit Packages**: Determine which legacy SS3 modules can be replaced with native SS4/Dynamic equivalents.
 2. **Block Assessment**: Legacy `dynamic/dynamic-blocks` (or `sheadawson/silverstripe-blocks`) must be mapped to `dnadesign/silverstripe-elemental`.
