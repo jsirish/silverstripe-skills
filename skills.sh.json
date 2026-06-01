@@ -1,0 +1,38 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Version Upgrades",
+      "description": "Upgrading Silverstripe CMS between major versions",
+      "skills": [
+        "silverstripe-3-to-4-upgrade",
+        "silverstripe-version-upgrade",
+        "block-to-element-migration",
+        "ss5-data-migration",
+        "ss6-data-migration"
+      ]
+    },
+    {
+      "title": "Essentials Stack",
+      "description": "Working with Dynamic's Silverstripe Essentials theme and modules",
+      "skills": [
+        "essentials-theme",
+        "essentials-blocks",
+        "essentials-fixtures",
+        "element-templates",
+        "silverstripe-essentials-website",
+        "silverstripe-essentials-cms-training"
+      ]
+    },
+    {
+      "title": "Dev Environment & Deployment",
+      "description": "Local dev, syncing, and deployment workflows",
+      "skills": [
+        "ddev-sync",
+        "server-sync-deploy",
+        "dynamic-base-site"
+      ]
+    }
+  ]
+}
