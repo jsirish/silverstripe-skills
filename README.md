@@ -20,6 +20,7 @@ Agent skills for [Silverstripe CMS](https://www.silverstripe.org/) development â
 | `silverstripe-version-upgrade` | Upgrade Silverstripe between major versions (e.g. SS4 â†’ SS5) |
 | `ss5-data-migration` | Execute Silverstripe 5 data migration tasks |
 | `ss6-data-migration` | Silverstripe 6 upgrade data migration workflow |
+| `visual-regression-upgrade` | Screenshot diff between two environments to verify upgrade visual parity |
 
 ## Installation
 

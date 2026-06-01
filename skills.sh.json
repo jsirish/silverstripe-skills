@@ -10,7 +10,8 @@
         "silverstripe-version-upgrade",
         "block-to-element-migration",
         "ss5-data-migration",
-        "ss6-data-migration"
+        "ss6-data-migration",
+        "visual-regression-upgrade"
       ]
     },
     {
