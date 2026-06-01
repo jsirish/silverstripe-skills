@@ -117,11 +117,16 @@ class BlockMigrationTask extends BuildTask
 
     private function discoverBlocks(): array
     {
+        // Derive page columns from AREA_MAP so adding a new mapping automatically
+        // adds the column to the SELECT without manual sync.
+        $uniqueCols = array_unique(array_values(self::AREA_MAP));
+        $areaCols = '"p"."' . implode('", "p"."', $uniqueCols) . '"';
+
         $result = DB::query(
             'SELECT "stb"."SiteTreeID", "stb"."BlockID", "stb"."Sort", "stb"."BlockArea",'
             . ' "b"."ClassName" AS "BlockClassName", "b"."Title" AS "BlockTitle",'
             . ' "b"."Created", "b"."LastEdited",'
-            . ' "p"."ElementalAreaID", "p"."SidebarElementalAreaID"'
+            . ' ' . $areaCols
             . ' FROM "SiteTree_Blocks" AS "stb"'
             . ' INNER JOIN "Block" AS "b" ON "b"."ID" = "stb"."BlockID"'
             . ' INNER JOIN "Page" AS "p" ON "p"."ID" = "stb"."SiteTreeID"'
@@ -297,12 +302,14 @@ class BlockMigrationTask extends BuildTask
      */
     private function mapBlockClass(string $blockClass): array
     {
-        return match ($blockClass) {
+        // ─── FILL IN: legacy block class → [Element class, default title] ────
+        // Array lookup (PHP 7.0+) keeps this task runnable on PHP 7.4 SS4 servers.
+        $map = [
             'ContentBlock' => ['DNADesign\\Elemental\\Models\\ElementContent', 'Content'],
-            // 'PromoBlock' => ['App\\Elements\\ElementPromo', 'Promo'],
-            // 'PageSectionBlock' => ['App\\Elements\\ElementPageSection', 'Page Section'],
-            default => ['', ''],
-        };
+            // 'PromoBlock'        => ['App\\Elements\\ElementPromo',        'Promo'],
+            // 'PageSectionBlock'  => ['App\\Elements\\ElementPageSection',  'Page Section'],
+        ];
+        return $map[$blockClass] ?? ['', ''];
     }
 
     private function createSubtypeRow(int $elementId, string $blockClass, int $blockId): void
