@@ -118,11 +118,28 @@ def apply_masks(page, selectors):
     page.evaluate(
         """(sels) => {
             for (const sel of sels) {
-                document.querySelectorAll(sel).forEach(el => {
-                    el.style.background = '#cccccc';
-                    el.style.color = '#cccccc';
-                    el.style.borderColor = '#cccccc';
-                    el.querySelectorAll('*').forEach(c => c.style.visibility = 'hidden');
+                let elements;
+                try {
+                    elements = document.querySelectorAll(sel);
+                } catch (e) {
+                    console.warn(`Skipping invalid mask selector: ${sel}`, e);
+                    continue;
+                }
+                elements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (!rect.width || !rect.height) return;
+                    const overlay = document.createElement('div');
+                    overlay.setAttribute('data-vr-mask', sel);
+                    overlay.style.position = 'absolute';
+                    overlay.style.left = `${rect.left + window.scrollX}px`;
+                    overlay.style.top = `${rect.top + window.scrollY}px`;
+                    overlay.style.width = `${rect.width}px`;
+                    overlay.style.height = `${rect.height}px`;
+                    overlay.style.background = '#cccccc';
+                    overlay.style.zIndex = '2147483647';
+                    overlay.style.pointerEvents = 'none';
+                    el.style.visibility = 'hidden';
+                    document.documentElement.appendChild(overlay);
                 });
             }
         }""",
@@ -214,16 +231,18 @@ def main():
         help="Playwright navigation wait condition (default: load). Use networkidle for fully-static sites; load is safer on sites with analytics/chat/polling.",
     )
     ap.add_argument("--wait", type=float, default=2.0, help="Extra wait seconds after navigation completes")
-    ap.add_argument(
-        "--auth",
-        help=(
-            "HTTP basic auth. Accepts: 'user:pass' (visible in argv — discouraged), "
-            "'env:VARNAME' (read user:pass from one env var), "
-            "'env:USERVAR/PASSVAR' (split across two env vars), "
-            "or 'prompt' for an interactive prompt."
-        ),
+    auth_help = (
+        "HTTP basic auth. Accepts: 'user:pass' (visible in argv — discouraged), "
+        "'env:VARNAME' (read user:pass from one env var), "
+        "'env:USERVAR/PASSVAR' (split across two env vars), "
+        "or 'prompt' for an interactive prompt."
     )
-    ap.add_argument("--cookies", help="Path to Playwright-format cookies JSON")
+    ap.add_argument("--auth", help=f"Applied to both environments unless overridden. {auth_help}")
+    ap.add_argument("--prod-auth", help=f"Overrides --auth for the production environment only. {auth_help}")
+    ap.add_argument("--local-auth", help=f"Overrides --auth for the local/UAT environment only. {auth_help}")
+    ap.add_argument("--cookies", help="Path to Playwright-format cookies JSON, applied to both environments unless overridden.")
+    ap.add_argument("--prod-cookies", help="Path to Playwright-format cookies JSON for production only. Overrides --cookies.")
+    ap.add_argument("--local-cookies", help="Path to Playwright-format cookies JSON for local/UAT only. Overrides --cookies.")
     ap.add_argument("--mask", help='Path to masks.json: {"/path": ["selector", ...]}')
     ap.add_argument("--insecure", action="store_true", help="Ignore HTTPS errors (self-signed certs)")
     args = ap.parse_args()
@@ -238,14 +257,21 @@ def main():
     masks_cfg = load_json(args.mask) if args.mask else None
     resolved_auth = resolve_auth(args.auth)
 
+    # Per-env auth/cookies take precedence over the shared --auth/--cookies flags.
+    # This prevents UAT credentials being sent to production when only UAT is protected.
+    prod_auth = resolve_auth(args.prod_auth) if args.prod_auth else resolved_auth
+    local_auth = resolve_auth(args.local_auth) if args.local_auth else resolved_auth
+    prod_cookies = load_json(args.prod_cookies) if args.prod_cookies else cookies
+    local_cookies = load_json(args.local_cookies) if args.local_cookies else cookies
+
     started = datetime.now(timezone.utc).isoformat()
     prod_results = capture_env(
         "prod", args.prod, paths, out / "prod",
-        args.viewport, args.wait, resolved_auth, cookies, masks_cfg, args.insecure, args.wait_until,
+        args.viewport, args.wait, prod_auth, prod_cookies, masks_cfg, args.insecure, args.wait_until,
     )
     local_results = capture_env(
         "local", args.local, paths, out / "local",
-        args.viewport, args.wait, resolved_auth, cookies, masks_cfg, args.insecure, args.wait_until,
+        args.viewport, args.wait, local_auth, local_cookies, masks_cfg, args.insecure, args.wait_until,
     )
     finished = datetime.now(timezone.utc).isoformat()
 

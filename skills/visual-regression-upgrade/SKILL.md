@@ -56,8 +56,8 @@ Optional flags:
 - `--viewport 1440x900` (default)
 - `--wait-until load` (default) — Playwright navigation condition. Use `networkidle` for fully-static sites; `load` is safer on sites with analytics/chat widgets/long-polling
 - `--wait 2.0` — extra seconds to wait after navigation completes
-- `--auth` — HTTP basic auth. Prefer `env:VR_AUTH` (one env var with `user:pass`), `env:VR_USER/VR_PASS` (two vars), or `prompt` (interactive). `user:pass` works but is visible in argv/shell history — only use it for throwaway UAT credentials.
-- `--cookies cookies.json` — Playwright-format cookie list
+- `--auth` / `--prod-auth` / `--local-auth` — HTTP basic auth, applied to both environments or scoped to one. Prefer `env:VR_AUTH` / `env:VR_USER/VR_PASS` / `prompt`. Use `--local-auth` when only UAT is protected to avoid sending UAT credentials to production.
+- `--cookies` / `--prod-cookies` / `--local-cookies` — Playwright-format cookie list, applied to both or scoped to one environment
 - `--mask masks.json` — `{ "/path/or/*": ["selector1", ".cookie-banner"] }` — paints these regions `#cccccc` before snapping. Use this for rotating banners, date stamps, "users online now" counters.
 
 Writes `vr-out/prod/<slug>.png`, `vr-out/local/<slug>.png`, and `vr-out/manifest.json`.
@@ -88,15 +88,15 @@ Tune masks and re-run if WARN/FAIL pages are all caused by the same dynamic widg
 # 1. Discover
 python scripts/crawl_urls.py --url https://www.example.com --limit 25 --out paths.txt
 
-# 2. Capture (UAT behind basic auth — credentials from env)
+# 2. Capture (UAT behind basic auth — scoped to local only so prod doesn't receive UAT credentials)
 export VR_AUTH="uatuser:uatpass"
 python scripts/capture.py \
-  --prod  https://www.example.com \
-  --local https://uat.example.com \
-  --paths "$(paste -sd, paths.txt)" \
-  --auth  env:VR_AUTH \
-  --mask  masks.json \
-  --out   ./vr-out
+  --prod        https://www.example.com \
+  --local       https://uat.example.com \
+  --paths       "$(paste -sd, paths.txt)" \
+  --local-auth  env:VR_AUTH \
+  --mask        masks.json \
+  --out         ./vr-out
 
 # 3. Report
 python scripts/diff_report.py --in ./vr-out --out ./vr-out/report

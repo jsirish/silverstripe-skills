@@ -114,10 +114,23 @@ def crawl(base_url, limit, max_depth=2):
     # Follow the initial redirect (if any) so the canonical host becomes
     # the comparison base — otherwise a site that redirects bare→www
     # would have every same-site link filtered out.
+    # If the redirect lands on a different host (e.g. an external holding
+    # page), keep the original URL as the base to avoid fetching off-scope
+    # content as if it were part of the site.
+    original_host = urlparse(base_url).netloc
     try:
         initial = requests.get(base_url, headers=HEADERS, timeout=15)
-        resolved_url = initial.url
-        initial_html = initial.text if "text/html" in initial.headers.get("content-type", "") else None
+        initial_host = urlparse(initial.url).netloc
+        if _hosts_match(initial_host, original_host):
+            resolved_url = initial.url
+            initial_html = (
+                initial.text
+                if initial.status_code == 200 and "text/html" in initial.headers.get("content-type", "")
+                else None
+            )
+        else:
+            resolved_url = base_url
+            initial_html = None
     except requests.RequestException:
         resolved_url = base_url
         initial_html = None
@@ -137,8 +150,12 @@ def crawl(base_url, limit, max_depth=2):
         if body is None:
             try:
                 r = requests.get(url, headers=HEADERS, timeout=15)
+                final_url = r.url
+                if not _hosts_match(urlparse(final_url).netloc, base_host):
+                    continue
                 if r.status_code != 200 or "text/html" not in r.headers.get("content-type", ""):
                     continue
+                url = final_url
                 body = r.text
             except requests.RequestException:
                 continue
