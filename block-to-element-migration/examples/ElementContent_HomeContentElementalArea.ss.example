@@ -1,0 +1,82 @@
+<%--
+    EXAMPLE — area-variant element template (annotated side-by-side)
+
+    Path: themes/<theme>/templates/DNADesign/Elemental/Models/ElementContent_HomeContentElementalArea.ss
+
+    This is the SS4 element template that replaces the SS3 legacy
+    `ContentBlock_HomeContent.ss`. The HTML structure is identical —
+    only the data-injection variables changed.
+
+    Resolved by SS4 Elemental when:
+      - The element is `DNADesign\Elemental\Models\ElementContent`
+      - The element's parent ElementalArea is reached via the page's
+        `HomeContentElementalArea` has_one relation
+    Falls through to `ElementContent.ss` otherwise.
+
+    ──────────────────────────────────────────────────────────────────
+    LEGACY SS3 SOURCE (themes/<theme>/templates/Includes/ContentBlock_HomeContent.ss):
+    ──────────────────────────────────────────────────────────────────
+
+    <div class="$CSSClasses">
+        <div class="container">
+            <div class="lines"></div>
+            <div class="col-md-5"><div class="inner">
+                <% if $Title %><h3>$Title</h3><% end_if %>           ← $Title check
+                <div class="typography">
+                    <% if $Content %><p>$Content.Plain<% end_if %>   ← $Content
+                </div>
+            </div></div>
+            <div class="col-md-7">
+                <% if $Image %><img src="$Image.URL" alt="Title"><% end_if %>
+            </div>
+        </div>
+    </div>
+
+    ──────────────────────────────────────────────────────────────────
+    MIGRATED SS4 — THE FILE BELOW
+    ──────────────────────────────────────────────────────────────────
+
+    Diff summary (per template-parity-pattern.md cheatsheet):
+      • `$CSSClasses` → `$StyleClasses block contentblock`
+        Reason: $CSSClasses in SS4 is verbose ("ElementContent BaseElement
+        DataObject"); we want the legacy "contentblock block" so the SS3
+        CSS still matches. $StyleClasses gives us the CMS-set style
+        without the class-hierarchy verbosity.
+
+      • `<% if $Title %>` → `<% if $ShowTitle && $Title %>`
+        Reason: Elemental adds a ShowTitle boolean field. The migration
+        task sets ShowTitle=1 when the legacy block had a non-empty title;
+        respect it here.
+
+      • `$Content` → `$HTML`
+        Reason: ElementContent's CMS field is called "Content" but the
+        template variable was renamed to $HTML. (The #1 source of "I
+        migrated the block but the template shows blank" bugs.)
+
+      • Added `<% if $SubTitle %>` block (optional)
+        Reason: If your project added a SubTitle extension to
+        ElementContent. Drop if you didn't.
+
+    Nothing else changed. The div nesting, column classes, typography
+    div, image wrapper — all identical. Existing CSS works untouched.
+--%>
+
+<div class="$StyleClasses block contentblock">
+    <div class="container">
+        <div class="lines"></div>
+        <div class="col-md-5">
+            <div class="inner">
+                <% if $ShowTitle && $Title %><h3>$Title</h3><% end_if %>
+                <% if $SubTitle %><h3>$SubTitle</h3><% end_if %>
+                <div class="typography">
+                    <% if $HTML %><p>$HTML.Plain<% end_if %>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <% if $Image %>
+                <img src="$Image.URL" class="img-responsive" alt="$Title">
+            <% end_if %>
+        </div>
+    </div>
+</div>

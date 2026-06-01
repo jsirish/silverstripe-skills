@@ -16,7 +16,7 @@ Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe
 
 | Phase | Key Actions |
 |-------|-------------|
-| **1. Assessment** | Audit SS3 modules, plan block-to-elemental migration |
+| **1. Assessment** | **Package audit** (`git diff branch-1 -- composer.json`) · spin up legacy ddev instance · plan block-to-elemental migration |
 | **2. Architecture** | Move `mysite` to `app`, introduce `public` directory |
 | **3. Dependencies** | Update `composer.json` to `^4.0`, update PHP constraints |
 | **4. Namespaces** | Apply PSR-4 namespaces, remap config class names |
@@ -26,6 +26,60 @@ Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe
 | **8. Build & Verify** | `dev/build flush=1`, QA frontend and admin |
 
 ## Phase 1: Assessment & Discovery
+
+### 1a. Package Audit (do this before writing any upgrade code)
+
+Run the composer diff against the legacy branch immediately after branching:
+
+```bash
+git diff branch-1..feature/silverstripe-4-upgrade -- composer.json
+```
+
+For every package **removed** from `require`, document:
+- What feature/UI it provided on the frontend
+- Whether SS4 has a drop-in replacement (`composer show` or packagist)
+- Whether it stored data that needs migrating (DataObject tables in the DB)
+
+**Common removals and their consequences:**
+
+| SS3 Package | What it provided | SS4 situation |
+|-------------|-----------------|---------------|
+| `silverstripe/widgets` | Blog sidebar widgets (archive, tags, categories, recent posts) | `silverstripe/blog ^3.x` still supports widgets — use `silverstripe/widgets ^2.x`. Require it explicitly (`composer require silverstripe/widgets "^2.4"`), apply `WidgetPageExtension` to Blog + BlogPost in extensions.yml, and backfill `Widget_Live`/`WidgetArea_Live` tables after prod sync (Widget and Widget_Live have different column order — use explicit column lists). |
+| `sheadawson/silverstripe-blocks` | Arbitrary content blocks on pages | Replace with `dnadesign/silverstripe-elemental`. Requires `BlockMigrationTask`. |
+| `dynamic/dynamic-blocks` | Same as sheadawson blocks, Dynamic flavour | Same as above. |
+| `dynamic/core-tools` | `GlobalSiteSetting`, various helpers | Not available for SS4 — recreate `GlobalSiteSetting` as a custom DataObject. |
+| `silverstripe/secureassets` | Protected file storage | Merged into SS4 core (`silverstripe/assets`). No action needed, but verify `.protected/` path. |
+| `heyday/silverstripe-versioneddataobjects` | Versioning for non-Page DataObjects | Replaced by `Versioned` extension (built into SS4). Remove and add `$extensions = [Versioned::class]` manually. |
+| `dynamic/flexslider` | Slider block type | Rebuilt as `ElementPageSection` or similar custom Elemental element. |
+| `i-lateral/silverstripe-searchable` | Site search | Version `^2.0` available for SS4. |
+
+> [!WARNING]
+> **`silverstripe/widgets` + blog**: If the SS3 site used blog sidebar widgets, add `silverstripe/widgets ^2.4` to the SS4 project. It is NOT dropped in blog ^3.x — it's optional. After requiring it: (1) apply `WidgetPageExtension` to Blog + BlogPost in extensions.yml, (2) run dev/build, (3) backfill `Widget_Live` and `WidgetArea_Live` from draft tables using explicit column lists (column order differs between draft and live tables). Don't rely on `INSERT INTO _Live SELECT * FROM table` — it silently corrupts data.
+
+### 1b. Legacy ddev instance
+
+For any non-trivial upgrade, spin up a parallel local instance of the SS3 branch **before** starting the upgrade:
+
+```bash
+# In a separate directory (e.g. ~/Sites/{project}-legacy)
+git clone <repo> {project}-legacy
+cd {project}-legacy
+git checkout 1  # or whatever the legacy branch is
+ddev config --project-name {project}-legacy --project-type php --php-version 7.4
+ddev start
+ddev auth ssh
+ddev exec ./sync.sh  # sync prod DB and assets
+```
+
+This gives you `https://{project}-legacy.ddev.site` — a running SS3 instance against the same data you're upgrading. Use it to:
+- Confirm what each URL renders on SS3 before starting SS4 work
+- Run VR captures against `{project}-legacy.ddev.site` instead of the live prod URL (eliminates content drift between your DB snapshot and live prod)
+- Diagnose "was this feature even working on prod?" without loading the live site
+
+> [!TIP]
+> The youth-sailing project has a working reference for this pattern: `~/Sites/youth-sailing` (SS4) vs `~/Sites/youth-sailing-legacy` (SS3). Use it as a template for the ddev config setup.
+
+### 1c. Package Assessment (original step)
 
 1. **Audit Packages**: Determine which legacy SS3 modules can be replaced with native SS4/Dynamic equivalents.
 2. **Block Assessment**: Legacy `dynamic/dynamic-blocks` (or `sheadawson/silverstripe-blocks`) must be mapped to `dnadesign/silverstripe-elemental`.
@@ -79,15 +133,9 @@ Before `dev/build` can succeed, you must resolve SS3 legacy schema blockers.
 > ```
 
 > [!WARNING]
-> **__TEMP__ Table Collisions**: SS4 dev/build creates `__TEMP__` tables to migrate data. If a previous run crashed, orphaned temp tables will block table renames. You must iteratively drop them.
-> ```bash
-> # Loop to clear orphaned temp tables until success:
-> ddev exec "mysql -udb -pdb db -s -N -e \
->   \"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='db' AND TABLE_NAME LIKE '__TEMP__%';\"" \
->   2>/dev/null | while read tbl; do
->     ddev exec "mysql -udb -pdb db -e \"DROP TABLE IF EXISTS \\\`$tbl\\\`;\""
-> done
-> ```
+> **__TEMP__ and _Versions Table Collisions**: SS4 dev/build creates `__TEMP__` tables to migrate data. SS3 `_Versions` tables from the source DB collide with SS4's rename target. On every fresh prod sync (and after any crashed dev/build), drop both kinds in a single statement before re-running dev/build.
+>
+> See [references/db-rebuild-conflicts.md](references/db-rebuild-conflicts.md) for the bulk-drop snippet and edge cases. The TL;DR: a single `DROP TABLE IF EXISTS \`a\`,\`b\`,\`c\`,...;` statement is dramatically faster than the per-table loop you'll find in older guides.
 
 ## Phase 6: Data Migration Tasks
 
@@ -115,6 +163,8 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
    ```
    *Note: Dev/build renames obsolete classes to `_obsolete_PromoObject`. The custom task must read from these `_obsolete_` tables via `DB::query()` and write to Elemental tables.*
 
+   **➡ Use the dedicated [block-to-element-migration](../block-to-element-migration/SKILL.md) skill** for the full workflow: discovery, page-model setup, the migration-task skeleton, the legacy-template → element-template duplication pattern, the area-suffix template convention (`Element_RelationName.ss`), and verification. The earlier inline reference at [references/block-to-elemental-migration.md](references/block-to-elemental-migration.md) is preserved as the seed material the new skill was distilled from.
+
 ## Phase 7: Templates & Front-End
 
 - **Variables**: Update `$Link` to `$URL` in template `.ss` files.
@@ -136,3 +186,15 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 
 > [!IMPORTANT]
 > **Image Resize Methods**: `jonom/focuspoint` is rarely carried over to SS4. Update template tags from `$Image.FocusFill()` to `$Image.Fill(X, Y)` or native SS4 crop functions.
+
+> [!WARNING]
+> **ElementalArea_Live is empty after dev/build**: SS4 `dev/build` creates `ElementalArea` rows on the **draft** table only. Elements you placed during migration won't appear on the frontend until both `ElementalArea_Live` and `Page_Live.ElementalAreaID` are populated. The block migration task must end with these two SQL passes. Full pattern: [block-to-element-migration](../block-to-element-migration/SKILL.md).
+
+> [!WARNING]
+> **Versioned writes need _Live AND _Versions**: When inserting Elements via raw SQL, write to all three tables: base draft, `_Live`, and `_Versions`. Skipping `_Versions` causes "no history" errors when editing in the CMS and can cause `publish()` to silently strip the record from `_Live`. See the `insertVersionedRow()` helper in [block-to-element-migration/references/migration-task-skeleton.md](../block-to-element-migration/references/migration-task-skeleton.md).
+
+> [!TIP]
+> **Legacy CSS still works if you keep the old class**: SS3 themes scope CSS to block class names (`.pagesectionblock`, `.promoblock`, etc.). Elemental's `$CSSClasses` outputs `element app__elements__elementpagesection` instead. To retain existing CSS during migration, add the legacy class to the Elemental wrapper template: `<div class="$CSSClasses pagesectionblock">`. Defer full CSS rewrite until after migration is verified.
+
+> [!WARNING]
+> **JS-dependent CSS will collapse**: SS3 themes often use JavaScript to set fixed heights on block containers, then position child elements absolutely within them. With the JS gone, `position: absolute` children leave the parent at height 0 and the layout collapses. When migrating, remove `vert-centering` (or equivalent) classes from element templates — don't try to revive the JS.
