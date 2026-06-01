@@ -1,5 +1,5 @@
 ---
-name: Essentials Fixtures Recipe
+name: essentials-fixtures
 description: Configure and implement the recipe-silverstripe-essentials-fixtures package for template population in Essentials projects.
 ---
 

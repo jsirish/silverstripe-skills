@@ -1,5 +1,5 @@
 ---
-name: Essentials Blocks Guide
+name: essentials-blocks
 description: Guidelines for working with Essentials block elements in the Silverstripe Essentials Demo workspace
 ---
 

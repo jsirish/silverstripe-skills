@@ -1,0 +1,18 @@
+{
+  "name": "silverstripe-skills",
+  "version": "1.0.0",
+  "description": "Agent skills for Silverstripe CMS development — upgrades, Elemental, Essentials stack, and deployment workflows",
+  "keywords": [
+    "skills",
+    "silverstripe",
+    "claude-code",
+    "opencode",
+    "copilot"
+  ],
+  "author": "Dynamic Agency <dev@dynamicagency.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dynamic/silverstripe-skills.git"
+  }
+}
