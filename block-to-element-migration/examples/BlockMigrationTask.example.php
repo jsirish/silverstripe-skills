@@ -36,6 +36,10 @@ class BlockMigrationTask extends BuildTask
         'SectionNavigationBlock',
     ];
 
+    // All values must be columns on the Page table (base class). If a column
+    // lives on a subclass table (e.g. HomeContentElementalAreaID on HomePage),
+    // LEFT JOIN that table in discoverBlocks() and add a separate UPDATE in
+    // syncPageAreasToLive() for its _Live counterpart.
     private const AREA_MAP = [
         'Sidebar' => 'SidebarElementalAreaID',
         'HomeContent' => 'ElementalAreaID',
@@ -497,12 +501,19 @@ class BlockMigrationTask extends BuildTask
         if (!isset($tables['page_live'])) {
             return;
         }
+        $uniqueCols = array_unique(array_values(self::AREA_MAP));
+        $setClauses = [];
+        $whereClauses = [];
+        foreach ($uniqueCols as $col) {
+            $setClauses[]   = "pl.\"{$col}\" = p.\"{$col}\"";
+            $whereClauses[] = "p.\"{$col}\" != 0";
+        }
         DB::query(
             'UPDATE "Page_Live" pl'
             . ' INNER JOIN "Page" p ON p.ID = pl.ID'
-            . ' SET pl.ElementalAreaID = p.ElementalAreaID,'
-            . ' pl.SidebarElementalAreaID = p.SidebarElementalAreaID'
-            . ' WHERE p.ElementalAreaID != 0 OR p.SidebarElementalAreaID != 0'
+            . ' SET ' . implode(', ', $setClauses)
+            . ' WHERE ' . implode(' OR ', $whereClauses)
         );
+        DB::alteration_message('Synced Page area FKs to Page_Live.');
     }
 }

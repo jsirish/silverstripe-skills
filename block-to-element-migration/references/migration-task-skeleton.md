@@ -59,8 +59,12 @@ class BlockMigrationTask extends BuildTask
     ];
 
     // ─── FILL IN: BlockArea → Page column lookup ──────────────────────────
-    // Defaults: HomeContent/AfterContent/BeforeContent → main area;
-    // Sidebar → sidebar area. Add HomePage-specific areas as needed.
+    // Maps each legacy BlockArea string to the Page-table column that holds
+    // the target ElementalArea FK. All values MUST be columns on the Page
+    // table (the base class). If a column lives on a subclass table
+    // (e.g. HomeContentElementalAreaID declared as a has_one on HomePage),
+    // you also need to LEFT JOIN that subclass table in discoverBlocks() and
+    // add a second UPDATE in syncPageAreasToLive() for its _Live counterpart.
     private const AREA_MAP = [
         'Sidebar' => 'SidebarElementalAreaID',
         'HomeContent' => 'ElementalAreaID',
@@ -117,8 +121,11 @@ class BlockMigrationTask extends BuildTask
 
     private function discoverBlocks(): array
     {
-        // Derive page columns from AREA_MAP so adding a new mapping automatically
-        // adds the column to the SELECT without manual sync.
+        // Derive page columns from AREA_MAP so adding a mapping there
+        // automatically adds the column to the SELECT without manual sync.
+        // All AREA_MAP values must be columns on the Page table. If a column
+        // lives on a subclass table (e.g. HomePage), add a LEFT JOIN for that
+        // table here and select its columns with an alias.
         $uniqueCols = array_unique(array_values(self::AREA_MAP));
         $areaCols = '"p"."' . implode('", "p"."', $uniqueCols) . '"';
 
@@ -130,6 +137,7 @@ class BlockMigrationTask extends BuildTask
             . ' FROM "SiteTree_Blocks" AS "stb"'
             . ' INNER JOIN "Block" AS "b" ON "b"."ID" = "stb"."BlockID"'
             . ' INNER JOIN "Page" AS "p" ON "p"."ID" = "stb"."SiteTreeID"'
+            // Add LEFT JOINs here for any subclass tables referenced in AREA_MAP
             . ' ORDER BY "stb"."SiteTreeID", "stb"."BlockArea", "stb"."Sort" ASC'
         );
         $rows = [];
@@ -444,12 +452,22 @@ class BlockMigrationTask extends BuildTask
         if (!isset($tables['page_live'])) {
             return;
         }
+        // Build SET/WHERE from AREA_MAP so custom Page columns are synced
+        // automatically alongside the defaults. Columns that live on a subclass
+        // table (e.g. HomePage) need a separate UPDATE against that table's
+        // _Live counterpart — add it below.
+        $uniqueCols = array_unique(array_values(self::AREA_MAP));
+        $setClauses = [];
+        $whereClauses = [];
+        foreach ($uniqueCols as $col) {
+            $setClauses[]   = "pl.\"{$col}\" = p.\"{$col}\"";
+            $whereClauses[] = "p.\"{$col}\" != 0";
+        }
         DB::query(
             'UPDATE "Page_Live" pl'
             . ' INNER JOIN "Page" p ON p.ID = pl.ID'
-            . ' SET pl.ElementalAreaID = p.ElementalAreaID,'
-            . ' pl.SidebarElementalAreaID = p.SidebarElementalAreaID'
-            . ' WHERE p.ElementalAreaID != 0 OR p.SidebarElementalAreaID != 0'
+            . ' SET ' . implode(', ', $setClauses)
+            . ' WHERE ' . implode(' OR ', $whereClauses)
         );
         DB::alteration_message('Synced Page area FKs to Page_Live.');
     }
