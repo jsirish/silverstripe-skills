@@ -136,10 +136,17 @@ class BlockMigrationTask extends BuildTask
         $idList = implode(',', $ids);
         DB::alteration_message('Clearing ' . count($ids) . ' previously migrated elements...');
 
-        DB::query("DELETE FROM \"PageSection\" WHERE \"ElementPageSectionID\" IN ({$idList})");
-        DB::query("DELETE FROM \"PromoItem\" WHERE \"ElementPromoID\" IN ({$idList})");
-
         $tables = DB::get_schema()->tableList();
+
+        // Child rows of subtypes — gated on tableList() so re-runs stay safe
+        // even if an optional child table is absent.
+        if (isset($tables['pagesection'])) {
+            DB::query("DELETE FROM \"PageSection\" WHERE \"ElementPageSectionID\" IN ({$idList})");
+        }
+        if (isset($tables['promoitem'])) {
+            DB::query("DELETE FROM \"PromoItem\" WHERE \"ElementPromoID\" IN ({$idList})");
+        }
+
         foreach (['ElementContent', 'ElementPageSection', 'ElementPromo', 'ElementEvents', 'ElementStaffMember'] as $table) {
             $lc = strtolower($table);
             if (isset($tables[$lc])) {

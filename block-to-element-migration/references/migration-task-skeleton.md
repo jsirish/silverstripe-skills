@@ -174,13 +174,21 @@ class BlockMigrationTask extends BuildTask
         $idList = implode(',', $ids);
         DB::alteration_message('Clearing ' . count($ids) . ' previously migrated elements...');
 
-        // Child rows of subtypes — list every subtype's child table here
-        DB::query("DELETE FROM \"PageSection\" WHERE \"ElementPageSectionID\" IN ({$idList})");
-        DB::query("DELETE FROM \"PromoItem\" WHERE \"ElementPromoID\" IN ({$idList})");
+        $tables = DB::get_schema()->tableList();
+
+        // Child rows of subtypes — list every subtype's child table here.
+        // Gate each on tableList() so this is safe to copy into a project that
+        // doesn't have these optional child tables (re-run would otherwise fail
+        // with a missing-table error before cleanup completes).
+        if (isset($tables['pagesection'])) {
+            DB::query("DELETE FROM \"PageSection\" WHERE \"ElementPageSectionID\" IN ({$idList})");
+        }
+        if (isset($tables['promoitem'])) {
+            DB::query("DELETE FROM \"PromoItem\" WHERE \"ElementPromoID\" IN ({$idList})");
+        }
 
         // Subtype tables (+ _Live + _Versions) — list every Element subtype here
         $subTables = ['ElementContent', 'ElementPageSection', 'ElementPromo'];
-        $tables = DB::get_schema()->tableList();
         foreach ($subTables as $table) {
             $lc = strtolower($table);
             if (isset($tables[$lc])) {
@@ -225,6 +233,12 @@ class BlockMigrationTask extends BuildTask
             $row['LastEdited'],
             ($row['BlockArea'] ?? '') === 'Sidebar'
         );
+
+        // createElement() returns 0 for unmapped block classes — don't log or
+        // count those as placed.
+        if (!$elementId) {
+            return 'skipped';
+        }
 
         DB::alteration_message("  ✓ Placed {$blockClass} \"{$row['BlockTitle']}\" → area {$areaId} (page {$row['SiteTreeID']}, {$row['BlockArea']})");
 
