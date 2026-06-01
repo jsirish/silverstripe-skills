@@ -1,5 +1,5 @@
 ---
-name: dynamic-silverstripe-base-site
+name: dynamic-base-site
 description: Dynamic's Silverstripe base-site stack patterns - key modules, namespaces, and upgrade considerations
 ---
 

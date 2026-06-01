@@ -1,5 +1,5 @@
 ---
-name: Essentials Theme Customization
+name: essentials-theme
 description: Create and customize subthemes extending silverstripe-essentials-theme
 ---
 
