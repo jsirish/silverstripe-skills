@@ -130,7 +130,7 @@ Where `<NS>` is the element's PHP namespace path with backslashes replaced by sl
 
 Apply the variable-swap cheatsheet from [references/template-parity-pattern.md](references/template-parity-pattern.md). Keep the HTML structure untouched.
 
-If Elemental's verbose `BaseElement DataObject e123` wrapper classes leak through, override [`DNADesign/Elemental/Layout/ElementHolder.ss`](../../../themes/safeharbor/templates/DNADesign/Elemental/Layout/ElementHolder.ss) to just `$Element`. See [references/area-suffix-templates.md](references/area-suffix-templates.md) for full detail on template resolution.
+If Elemental's verbose `BaseElement DataObject e123` wrapper classes leak through, override `DNADesign/Elemental/Layout/ElementHolder.ss` in your theme's templates directory to just `$Element`. See [references/area-suffix-templates.md](references/area-suffix-templates.md) for full detail on template resolution.
 
 ### Phase 5 — Dry-run, execute, smoke-test
 
