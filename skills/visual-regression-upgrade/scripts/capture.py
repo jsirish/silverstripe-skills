@@ -150,16 +150,18 @@ def apply_masks(page, selectors):
 def masks_for_path(masks_cfg, path):
     if not masks_cfg:
         return []
+    # Strip query string for mask lookup so "/?flush=1" matches the "/" mask.
+    bare = path.split("?", 1)[0] or "/"
     out = []
     for pattern, sels in masks_cfg.items():
-        if pattern == path or pattern == "*":
+        if pattern == "*" or pattern == bare:
             out.extend(sels)
             continue
         if pattern.endswith("/*"):
             # Match the prefix WITH the trailing slash so "/news/*" matches
             # "/news/", "/news/123" but not "/newsletter".
             prefix = pattern[:-1]  # keep the trailing slash
-            if path == prefix.rstrip("/") or path.startswith(prefix):
+            if bare == prefix.rstrip("/") or bare.startswith(prefix):
                 out.extend(sels)
     return out
 
@@ -221,7 +223,18 @@ def main():
     ap = argparse.ArgumentParser(description="Capture full-page screenshots of two environments.")
     ap.add_argument("--prod", required=True, help="Production base URL")
     ap.add_argument("--local", required=True, help="Upgraded/UAT base URL")
-    ap.add_argument("--paths", required=True, help="Comma-separated paths (e.g. /,/about,/contact)")
+    paths_group = ap.add_mutually_exclusive_group(required=True)
+    paths_group.add_argument(
+        "--paths",
+        help="Comma-separated paths (e.g. /,/about,/contact). "
+             "Avoid if any path contains a literal comma — use --paths-file instead.",
+    )
+    paths_group.add_argument(
+        "--paths-file",
+        metavar="FILE",
+        help="Newline-delimited file of paths (e.g. paths.txt produced by crawl_urls.py). "
+             "Preferred over --paths — handles paths that contain commas or query strings.",
+    )
     ap.add_argument("--out", required=True, help="Output directory")
     ap.add_argument("--viewport", type=parse_viewport, default=parse_viewport("1440x900"))
     ap.add_argument(
@@ -247,9 +260,13 @@ def main():
     ap.add_argument("--insecure", action="store_true", help="Ignore HTTPS errors (self-signed certs)")
     args = ap.parse_args()
 
-    paths = [p.strip() for p in args.paths.split(",") if p.strip()]
+    if args.paths_file:
+        raw = Path(args.paths_file).read_text().splitlines()
+        paths = [p.strip() for p in raw if p.strip() and not p.startswith("#")]
+    else:
+        paths = [p.strip() for p in args.paths.split(",") if p.strip()]
     if not paths:
-        sys.exit("--paths produced no entries")
+        sys.exit("--paths / --paths-file produced no entries")
     paths = [p if p.startswith("/") else "/" + p for p in paths]
 
     out = Path(args.out)

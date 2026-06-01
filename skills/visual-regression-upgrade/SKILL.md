@@ -44,12 +44,11 @@ Review `paths.txt` and trim anything irrelevant (search pages, paginated archive
 ### Step 2 — Capture screenshots
 
 ```bash
-PATHS=$(paste -sd, paths.txt)
 python scripts/capture.py \
-  --prod  https://www.example.com \
-  --local https://uat.example.com \
-  --paths "$PATHS" \
-  --out ./vr-out
+  --prod        https://www.example.com \
+  --local       https://uat.example.com \
+  --paths-file  paths.txt \
+  --out         ./vr-out
 ```
 
 Optional flags:
@@ -93,7 +92,7 @@ export VR_AUTH="uatuser:uatpass"
 python scripts/capture.py \
   --prod        https://www.example.com \
   --local       https://uat.example.com \
-  --paths       "$(paste -sd, paths.txt)" \
+  --paths-file  paths.txt \
   --local-auth  env:VR_AUTH \
   --mask        masks.json \
   --out         ./vr-out
