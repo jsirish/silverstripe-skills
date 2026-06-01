@@ -70,7 +70,7 @@ Common SilverStripe widgets that change between captures:
 
 Some elements only exist on the **local/UAT** side and have no counterpart on prod. The default mask (gray background) doesn't fully suppress these — it makes the element gray on the local side but prod still has nothing there, so a small residual diff remains.
 
-**Mitigation:** add the element's selector to `masks.json` — the capture script places a grey overlay div over matched elements, hiding their content on both sides so prod's empty area and local's grey box are the same size. Alternatively, accept the residual diff as noise (usually < 1% for small dev bars).
+**Mitigation:** accept the residual diff as noise (usually < 1% for small dev bars). Masks suppress the element's content where it exists, but they cannot create a matching grey box on the side where the element is absent — so a small positional diff remains. For a clean zero-diff, remove the element entirely on the UAT side (e.g. disable the module) before capturing.
 
 Common one-sided elements to include in `"*"` masks:
 

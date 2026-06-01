@@ -125,7 +125,7 @@ def crawl(base_url, limit, max_depth=2):
             resolved_url = initial.url
             initial_html = (
                 initial.text
-                if initial.status_code == 200 and "text/html" in initial.headers.get("content-type", "")
+                if initial.status_code == 200 and "text/html" in initial.headers.get("content-type", "").lower()
                 else None
             )
         else:
@@ -153,7 +153,7 @@ def crawl(base_url, limit, max_depth=2):
                 final_url = r.url
                 if not _hosts_match(urlparse(final_url).netloc, base_host):
                     continue
-                if r.status_code != 200 or "text/html" not in r.headers.get("content-type", ""):
+                if r.status_code != 200 or "text/html" not in r.headers.get("content-type", "").lower():
                     continue
                 url = final_url
                 body = r.text
