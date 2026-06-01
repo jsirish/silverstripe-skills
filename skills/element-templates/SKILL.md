@@ -1,5 +1,5 @@
 ---
-name: Element Templates
+name: element-templates
 description: Create element template fixtures for the Essentials demo template library
 ---
 
