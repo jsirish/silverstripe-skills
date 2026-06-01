@@ -1,0 +1,70 @@
+# EXAMPLE — declaring ElementalArea has_one relations on page models
+#
+# Drop into app/_config/elemental.yml (or any project YAML config file).
+#
+# Pick the relations your project actually needs from the discovery output:
+#   SELECT DISTINCT BlockArea FROM SiteTree_Blocks;
+#
+# Each relation here gets:
+#   - has_one: the FK relation (creates a <Name>ID column on the page table)
+#   - owns: required so publishing the page publishes the area's elements
+#   - cascade_duplicates: required so duplicating a page produces a separate area
+#
+# The relation name (e.g. SidebarElementalArea) becomes the template suffix:
+#   themes/<theme>/templates/.../Elements/ElementContent_SidebarElementalArea.ss
+# See block-to-element-migration/references/area-suffix-templates.md
+
+---
+Name: app-elemental
+After: '#elementalpages'
+---
+
+# Apply ElementalPageExtension and a sidebar area to every Page
+Page:
+  extensions:
+    ElementalPageExtension: DNADesign\Elemental\Extensions\ElementalPageExtension
+  has_one:
+    SidebarElementalArea: DNADesign\Elemental\Models\ElementalArea
+  owns:
+    - SidebarElementalArea
+  cascade_duplicates:
+    - SidebarElementalArea
+
+# Keep CMS Content field even after ElementalPageExtension is applied —
+# without this, the rich-text Content field is hidden in favor of elements.
+# Re-enable if you migrated Content into an ElementContent so the field is empty.
+DNADesign\Elemental\Extensions\ElementalAreasExtension:
+  keep_content_fields: true
+
+# HomePage with multiple distinct content areas (example-multiarea pattern)
+App\Pages\HomePage:
+  has_one:
+    HomeLeftElementalArea: DNADesign\Elemental\Models\ElementalArea
+    HomeRightElementalArea: DNADesign\Elemental\Models\ElementalArea
+    HomeContentElementalArea: DNADesign\Elemental\Models\ElementalArea
+  owns:
+    - HomeLeftElementalArea
+    - HomeRightElementalArea
+    - HomeContentElementalArea
+  cascade_duplicates:
+    - HomeLeftElementalArea
+    - HomeRightElementalArea
+    - HomeContentElementalArea
+
+# Alternative — HomePage with one area, rendered uniquely from default Page area
+# (example-manufacturing pattern)
+#
+# App\Pages\HomePage:
+#   has_one:
+#     ElementalHomePage: DNADesign\Elemental\Models\ElementalArea
+#   owns:
+#     - ElementalHomePage
+#   cascade_duplicates:
+#     - ElementalHomePage
+
+# After editing this file:
+#   ddev sake dev/build flush=1
+#
+# Verify the columns were created:
+#   ddev exec mysql -e "DESCRIBE Page" | grep ElementalArea
+#   ddev exec mysql -e "DESCRIBE HomePage" | grep ElementalArea
