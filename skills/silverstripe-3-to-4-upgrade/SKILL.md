@@ -64,7 +64,7 @@ For any non-trivial upgrade, spin up a parallel local instance of the SS3 branch
 **Naming convention:** clone into `~/Sites/{project}-legacy` so the upgrade lives in `~/Sites/{project}` — the VR skill relies on this pattern.
 
 ```bash
-# In ~/Sites/{project}-legacy
+cd ~/Sites
 git clone <repo> {project}-legacy
 cd {project}-legacy
 git checkout 1  # or whatever the legacy branch is
