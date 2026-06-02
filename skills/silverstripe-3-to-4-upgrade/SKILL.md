@@ -118,7 +118,7 @@ SS4 heavily relies on PHP namespaces.
      "psr-4": { "App\\": "app/src/" }
    }
    ```
-3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. This runs during `dev/build` and rewrites all `ClassName` columns across every table (including `_Live` and `_Versions`). Without it, SS4 can't resolve the stored class names and pages fall back to `Page.ss` (or render blank). This is **separate from** any Injector/config class aliasing — both may be needed. Add to `app/_config/app.yml`:
+3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. This runs during `dev/build` and rewrites all `ClassName` columns across every table (including `_Live` and `_Versions`). Without it, SS4 can't resolve the stored class names and pages fall back to `Page.ss` (or render blank). This is **separate from** any Injector/config class aliasing — both may be needed. The remapping is **idempotent** and safe to leave in place during the migration window; remove it once all migrated data is confirmed working. Add to `app/_config/app.yml`:
    ```yaml
    SilverStripe\ORM\DatabaseAdmin:
      classname_value_remapping:
@@ -208,10 +208,13 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 > [!CAUTION]
 > **A global `\PageController` must exist for base Page controller resolution.** `SiteTree::getControllerName()` walks the class ancestry appending `"Controller"`. For generic `Page`/`App\Pages\Page` records (including those remapped to `App\Pages\Page`), it looks for a `PageController`. Without it, those records fall back to `ContentController` and theme rendering breaks.
 >
-> Put the global controller in its **own file** `app/src/PageController.php` (NOT inside `Page.php`) and register **both** in the composer `classmap`:
+> Put the global controller in its **own file** `app/src/PageController.php` (NOT inside `Page.php`) and register **both** in the composer `classmap` — add `classmap` as a sibling **inside** the same `autoload` block that retains `psr-4`:
 > ```jsonc
 > // composer.json
-> "autoload": { "classmap": ["app/src/Page.php", "app/src/PageController.php"] }
+> "autoload": {
+>   "psr-4": { "App\\": "app/src/" },
+>   "classmap": ["app/src/Page.php", "app/src/PageController.php"]
+> }
 > ```
 > ```php
 > // app/src/PageController.php
