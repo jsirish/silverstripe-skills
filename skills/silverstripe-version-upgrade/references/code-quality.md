@@ -32,13 +32,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: php-actions/composer@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: intl, gd, mysqli
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
       - run: vendor/bin/phpstan analyse app/src/ --level 2
   phpunit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: php-actions/composer@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: intl, gd, mysqli
+      - run: composer install --no-interaction --prefer-dist
       - run: vendor/bin/phpunit
 ```
 
