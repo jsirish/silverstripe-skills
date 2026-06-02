@@ -128,12 +128,17 @@ python ../visual-regression-upgrade/scripts/crawl_urls.py \
 
 # Capture + diff both environments
 cd ~/Sites/{project}
-python ../visual-regression-upgrade/scripts/capture_urls.py \
-  --url https://{project}.ddev.site \
-  --paths ../{project}-legacy/paths.txt --out vr-out/ --diff
+python ../visual-regression-upgrade/scripts/capture.py \
+  --prod https://{project}-legacy.ddev.site \
+  --local https://{project}.ddev.site \
+  --paths-file ../{project}-legacy/paths.txt \
+  --out ./vr-out
+
+python ../visual-regression-upgrade/scripts/diff_report.py \
+  --in ./vr-out --out ./vr-out/report
 ```
 
-See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill for setup, authentication, and report interpretation.
+See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill for setup, auth, mask config, and report interpretation.
 
 ## Key Discoveries & Gotchas
 

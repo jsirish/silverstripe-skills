@@ -114,9 +114,17 @@ their styles (e.g. `/about/about-us` Single Feature link shows
 
 For a more thorough check, use the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill to capture automated pixel diffs between production and the SS6 upgrade:
 ```bash
-python scripts/crawl_urls.py --url https://www.dynamicagency.com --limit 30 --out paths.txt
-python scripts/capture_urls.py --url https://dynamicagency.ddev.site \
-  --ref-url https://www.dynamicagency.com --paths paths.txt --out vr-out/ --diff
+python ../visual-regression-upgrade/scripts/crawl_urls.py \
+  --url https://www.dynamicagency.com --limit 30 --out paths.txt
+
+python ../visual-regression-upgrade/scripts/capture.py \
+  --prod https://www.dynamicagency.com \
+  --local https://dynamicagency.ddev.site \
+  --paths-file paths.txt \
+  --out ./vr-out
+
+python ../visual-regression-upgrade/scripts/diff_report.py \
+  --in ./vr-out --out ./vr-out/report
 ```
 
 When the local site looks like production with no regressions, the SS6 upgrade
