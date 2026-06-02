@@ -42,7 +42,7 @@ Dynamic\BlockMigration\Tasks\BlocksToElementsTask:
 
 ❌ You're already comfortable with the example-custom-shaped `BlockMigrationTask` and the project only has 3–5 block types. Adding a composer dep for a small mapping table isn't worth it.
 
-❌ You want zero composer dependencies beyond `dnadesign/silverstripe-elemental`. (Rockline and example-multiarea both made this call.)
+❌ You want zero composer dependencies beyond `dnadesign/silverstripe-elemental`. (Example-manufacturing and example-multiarea both made this call.)
 
 ## How to add it to a project
 

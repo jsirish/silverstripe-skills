@@ -19,7 +19,7 @@ SS4 Elemental's `BaseElement::forTemplate()` calls `getRenderTemplates()`, which
 
 ## Examples from production
 
-Youth-sailing has the most extensive use of the pattern:
+Example-multiarea has the most extensive use of the pattern:
 
 ```
 themes/sys/templates/Dynamic/Elements/Promos/Elements/
@@ -35,7 +35,7 @@ Same `ElementPromos` Element class. Four different renderings driven by which ar
 - An element in `HomePage.HomeLeftElementalArea` resolves to `ElementPromos_HomeLeftElementalArea.ss`.
 - An element in any other area falls through to `ElementPromos.ss`.
 
-Rockline-iatric uses it for one variant:
+Example-manufacturing uses it for one variant:
 ```
 themes/example-manufacturing/templates/Dynamic/Elements/Promos/Elements/
 ├── ElementPromos.ss

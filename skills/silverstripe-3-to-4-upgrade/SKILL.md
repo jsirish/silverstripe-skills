@@ -10,7 +10,7 @@ description: >
 
 # Silverstripe 3 to 4 Upgrade Skill
 
-Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe 4. Based on the successful migration of Iatric Manufacturing, this guide details the exact steps, architectural shifts, and critical gotchas when moving to the SS4 framework.
+Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe 4. Based on the successful migration of Example Manufacturing, this guide details the exact steps, architectural shifts, and critical gotchas when moving to the SS4 framework.
 
 ## Upgrade Phases (Summary)
 
