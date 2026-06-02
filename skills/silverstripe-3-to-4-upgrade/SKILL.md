@@ -24,6 +24,7 @@ Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe
 | **6. Data Migration** | Run file migration, Elemental tasks, and custom SQL |
 | **7. Templates** | Fix `HomePage` resolution, update `$Link` to `$URL` |
 | **8. Build & Verify** | `dev/build flush=1`, QA frontend and admin |
+| **9. Code Quality & CI** | PHPCS, PHPStan, PHPUnit, GitHub Actions |
 
 ## Phase 1: Assessment & Discovery
 
@@ -107,18 +108,47 @@ git checkout -b feature/silverstripe-4-upgrade
 
 Run `composer update --with-all-dependencies` and `composer vendor-expose`.
 
+**Add modern dev dependencies** (the standard Dynamic toolkit for quality and debugging):
+
+```json
+"require-dev": {
+    "cambis/silverstan": "^1.0",
+    "ergebnis/composer-normalize": "^2.44",
+    "lekoala/silverstripe-debugbar": "^3.0",
+    "phpstan/extension-installer": "^1.3",
+    "phpunit/phpunit": "^9.6",
+    "silverleague/ideannotator": "~3.5.1",
+    "silverstripe/recipe-testing": "^2.0",
+    "squizlabs/php_codesniffer": "^3.10",
+    "wernerkrauss/silverstripe-rector": "^2.0"
+}
+```
+
+> [!NOTE]
+> **Version adjustments per SS major**: The constraints above target SS4. For SS5+ projects bump `cambis/silverstan` to `^2.1` and `silverstripe/recipe-testing` to `^3.0`. Check the latest release on Packagist if in doubt.
+
 ## Phase 4: Code & Namespace Migration
 
 SS4 heavily relies on PHP namespaces.
 
 1. **Namespacing**: Add namespaces to all classes in `app/src/` (e.g., `namespace App\Pages;` or `namespace Dynamic\Base\Page;`).
 2. **Add PSR-4 autoload to `composer.json`** — required for the namespaced classes to load:
+
+> [!TIP]
+> **Automate namespace migration with silverstripe-rector**: Instead of adding namespaces manually, use `wernerkrauss/silverstripe-rector` to automate the bulk of the work. After requiring it (see dev-dependencies above), configure `rector.php` and run:
+> ```bash
+> vendor/bin/rector --dry-run
+> vendor/bin/rector  # apply when ready
+> ```
+> This handles class-rename patterns, PSR-4 restructuring, and many SS3 deprecation fixes that are tedious to do by hand. See [github.com/wernerkrauss/silverstripe-rector](https://github.com/wernerkrauss/silverstripe-rector) for available rule sets.
+
+
    ```json
    "autoload": {
      "psr-4": { "App\\": "app/src/" }
    }
    ```
-3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. This runs during `dev/build` and rewrites all `ClassName` columns across every table (including `_Live` and `_Versions`). Without it, SS4 can't resolve the stored class names and pages fall back to `Page.ss` (or render blank). This is **separate from** any Injector/config class aliasing — both may be needed. Add to `app/_config/app.yml`:
+3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. This runs during `dev/build` and rewrites all `ClassName` columns across every table (including `_Live` and `_Versions`). Without it, SS4 can't resolve the stored class names and pages fall back to `Page.ss` (or render blank). This is **separate from** any Injector/config class aliasing — both may be needed. The remapping is **idempotent** and safe to leave in place during the migration window; remove it once all migrated data is confirmed working. Add to `app/_config/app.yml`:
    ```yaml
    SilverStripe\ORM\DatabaseAdmin:
      classname_value_remapping:
@@ -200,6 +230,103 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 > [!NOTE]
 > **Template Variant Naming**: Elemental uses `getAreaRelationName()` for suffixing. If a page has `has_one: ['ElementalHomePage' => ElementalArea::class]`, the variant file must be named `ElementPromos_ElementalHomePage.ss`.
 
+## Phase 8: Build & Verify
+
+1. **Run dev/build**:
+   ```bash
+   ddev sake dev/build flush=1
+   ```
+2. **Frontend QA**: Walk through the primary page types — HomePage, standard pages, blog, any custom page types. Check for:
+   - Blank pages (likely a missing `classname_value_remapping` entry or broken template resolution)
+   - Template fallback issues — use `?showtemplate=1` to confirm the correct template is resolving
+   - Broken images — `jonom/focuspoint` migrations require template updates
+3. **CMS admin QA**: Verify pages load in the CMS tree, elements render in the Elemental editor, and the SiteConfig / Settings section works.
+4. **Elemental areas**: Confirm `_Live` tables are populated. If ElementalArea_Live is empty, run the migration task's final SQL passes (see [block-to-element-migration](../block-to-element-migration/SKILL.md)).
+
+## Phase 9: Code Quality & CI
+
+After the upgrade builds and renders, lock down code quality with automated tools and CI:
+
+1. **PHPCS** — enforce coding standards:
+   ```bash
+   ddev exec vendor/bin/phpcs app/src/
+   ```
+   Common SS3→SS4 issues PHPCS catches: missing namespace declarations, outdated class references, PSR-2/PSR-12 formatting.
+
+2. **PHPStan** — static analysis (if configured):
+   ```bash
+   ddev exec vendor/bin/phpstan analyse app/src/
+   ```
+   Run at level 1–2 initially; the SS4 upgrade introduces many dynamic calls that require baseline configuration. Use `--generate-baseline` to create a `phpstan-baseline.neon` for known false positives.
+
+3. **Rector** — automated refactoring validation:
+   ```bash
+   ddev exec vendor/bin/rector --dry-run
+   ```
+   `silverstripe-rector` catches deprecated API usage, class-rename patterns, and namespace issues that phpstan/phpcs miss. Always run with `--dry-run` first to review changes. See the [Phase 4 tip](#phase-4-code--namespace-migration) for installation and configuration.
+
+4. **PHPUnit** — run the existing test suite:
+   ```bash
+   ddev exec vendor/bin/phpunit
+   ```
+   If no tests exist yet, this is the ideal time to add smoke tests for the upgraded page types and Elemental elements.
+
+5. **Rector in CI** — add a `rector` job to `.github/workflows/ci.yml`:
+   ```yaml
+   rector:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v4
+       - uses: shivammathur/setup-php@v2
+         with:
+           php-version: '8.1'
+           extensions: intl, gd, mysqli
+           coverage: none
+       - run: composer install --no-interaction --prefer-dist
+       - run: vendor/bin/rector --dry-run
+   ```
+
+6. **GitHub Actions CI** — automate quality gates for every PR:
+   ```yaml
+   # .github/workflows/ci.yml
+   name: CI
+   on: [pull_request]
+   jobs:
+     phpcs:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: silverstripe/gha-phpcs@v1
+           with:
+             path: app/src/
+     phpstan:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: shivammathur/setup-php@v2
+           with:
+             php-version: '8.1'
+             extensions: intl, gd, mysqli
+             coverage: none
+         - run: composer install --no-interaction --prefer-dist
+         - run: vendor/bin/phpstan analyse app/src/ --level 2
+     phpunit:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: shivammathur/setup-php@v2
+           with:
+             php-version: '8.1'
+             extensions: intl, gd, mysqli
+         - run: composer install --no-interaction --prefer-dist
+         - run: vendor/bin/phpunit
+   ```
+
+   > [!TIP]
+   > **Start simple**: a single `ci.yml` with just PHPCS and PHPStan will catch 90% of regression issues. Add PHPUnit once the upgrade tests are written. Pin the workflow to run only on `pull_request` to avoid redundant runs on every push to a feature branch.
+
+7. **Commit the CI config** to `.github/workflows/ci.yml` as part of the upgrade branch — it keeps quality enforcement in sync with the new codebase.
+
 ## Key Discoveries & Gotchas
 
 > [!CAUTION]
@@ -208,10 +335,13 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 > [!CAUTION]
 > **A global `\PageController` must exist for base Page controller resolution.** `SiteTree::getControllerName()` walks the class ancestry appending `"Controller"`. For generic `Page`/`App\Pages\Page` records (including those remapped to `App\Pages\Page`), it looks for a `PageController`. Without it, those records fall back to `ContentController` and theme rendering breaks.
 >
-> Put the global controller in its **own file** `app/src/PageController.php` (NOT inside `Page.php`) and register **both** in the composer `classmap`:
+> Put the global controller in its **own file** `app/src/PageController.php` (NOT inside `Page.php`) and register **both** in the composer `classmap` — add `classmap` as a sibling **inside** the same `autoload` block that retains `psr-4`:
 > ```jsonc
 > // composer.json
-> "autoload": { "classmap": ["app/src/Page.php", "app/src/PageController.php"] }
+> "autoload": {
+>   "psr-4": { "App\\": "app/src/" },
+>   "classmap": ["app/src/Page.php", "app/src/PageController.php"]
+> }
 > ```
 > ```php
 > // app/src/PageController.php
