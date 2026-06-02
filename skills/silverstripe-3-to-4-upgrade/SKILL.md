@@ -59,10 +59,12 @@ For every package **removed** from `require`, document:
 
 ### 1b. Legacy ddev instance
 
-For any non-trivial upgrade, spin up a parallel local instance of the SS3 branch **before** starting the upgrade:
+For any non-trivial upgrade, spin up a parallel local instance of the SS3 branch **before** starting the upgrade. This gives you a pixel-perfect reference to diff against when you reach the VR phase.
+
+**Naming convention:** clone into `~/Sites/{project}-legacy` so the upgrade lives in `~/Sites/{project}` — the VR skill relies on this pattern.
 
 ```bash
-# In a separate directory (e.g. ~/Sites/{project}-legacy)
+cd ~/Sites
 git clone <repo> {project}-legacy
 cd {project}-legacy
 git checkout 1  # or whatever the legacy branch is
@@ -78,7 +80,7 @@ This gives you `https://{project}-legacy.ddev.site` — a running SS3 instance a
 - Diagnose "was this feature even working on prod?" without loading the live site
 
 > [!TIP]
-> The youth-sailing project has a working reference for this pattern: `~/Sites/youth-sailing` (SS4) vs `~/Sites/youth-sailing-legacy` (SS3). Use it as a template for the ddev config setup.
+> The **sheboygan-safeharbor** project is the canonical reference for this pattern: `~/Sites/safeharbor` (SS4 upgrade) vs `~/Sites/safeharbor-legacy` (SS3 legacy). Also see `~/Sites/youth-sailing` / `~/Sites/youth-sailing-legacy` for an earlier example. Both use the same ddev config structure.
 
 ### 1c. Package Assessment (original step)
 
@@ -242,6 +244,25 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
    - Broken images — `jonom/focuspoint` migrations require template updates
 3. **CMS admin QA**: Verify pages load in the CMS tree, elements render in the Elemental editor, and the SiteConfig / Settings section works.
 4. **Elemental areas**: Confirm `_Live` tables are populated. If ElementalArea_Live is empty, run the migration task's final SQL passes (see [block-to-element-migration](../block-to-element-migration/SKILL.md)).
+
+5. **Visual regression** — prove pixel parity between the SS3 legacy site and the SS4 upgrade:
+   ```bash
+   # Using the legacy instance from Phase 1b
+   cd ~/Sites/{project}-legacy
+   python ../visual-regression-upgrade/scripts/crawl_urls.py \
+     --url https://{project}-legacy.ddev.site --limit 30 --out paths.txt
+
+   cd ~/Sites/{project}
+   python ../visual-regression-upgrade/scripts/capture.py \
+     --prod https://{project}-legacy.ddev.site \
+     --local https://{project}.ddev.site \
+     --paths-file ../{project}-legacy/paths.txt \
+     --out ./vr-out
+
+   python ../visual-regression-upgrade/scripts/diff_report.py \
+     --in ./vr-out --out ./vr-out/report
+   ```
+   See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill for setup, auth, mask config, and report interpretation. The legacy-vs-upgrade capture eliminates content-drift false positives and catches layout regressions manual QA misses.
 
 ## Phase 9: Code Quality & CI
 

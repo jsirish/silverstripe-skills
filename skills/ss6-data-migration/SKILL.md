@@ -110,6 +110,23 @@ their styles (e.g. `/about/about-us` Single Feature link shows
 `class="btn btn-primary btn-gradient"`), navigation works, and elemental blocks
 (Promos, Features, Single Feature) render their links.
 
+### Visual regression (optional)
+
+For a more thorough check, use the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill to capture automated pixel diffs between production and the SS6 upgrade:
+```bash
+python ../visual-regression-upgrade/scripts/crawl_urls.py \
+  --url https://www.dynamicagency.com --limit 30 --out paths.txt
+
+python ../visual-regression-upgrade/scripts/capture.py \
+  --prod https://www.dynamicagency.com \
+  --local https://dynamicagency.ddev.site \
+  --paths-file paths.txt \
+  --out ./vr-out
+
+python ../visual-regression-upgrade/scripts/diff_report.py \
+  --in ./vr-out --out ./vr-out/report
+```
+
 When the local site looks like production with no regressions, the SS6 upgrade
 is verified against current content and PR #284 can be considered for merge.
 
