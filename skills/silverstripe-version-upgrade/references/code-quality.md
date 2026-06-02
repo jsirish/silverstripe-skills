@@ -101,10 +101,25 @@ jobs:
 - Update namespace references for relocated classes
 - Remove references to removed extensions/classes
 
-### Visual Comparison with Staging/Production
+### Visual Regression
 
-Open the live/staging site and your local site side-by-side to confirm content parity:
-- Same number of slides in carousel
-- Same navigation links and order
-- Same footer content
-- Same elemental blocks on key pages
+Replace manual side-by-side checks with automated pixel-diff captures. See the [visual-regression-upgrade](../../visual-regression-upgrade/SKILL.md) skill for setup, auth, mask config, and report interpretation.
+
+Basic workflow:
+```bash
+# Crawl reference URLs from the current site
+python ../visual-regression-upgrade/scripts/crawl_urls.py \
+  --url https://www.example.com --limit 30 --out paths.txt
+
+# Capture + diff both environments
+python ../visual-regression-upgrade/scripts/capture.py \
+  --prod https://www.example.com \
+  --local https://upgrade.example.com \
+  --paths-file paths.txt \
+  --out ./vr-out
+
+python ../visual-regression-upgrade/scripts/diff_report.py \
+  --in ./vr-out --out ./vr-out/report
+```
+
+For SS4→SS5 upgrades, use the legacy local instance (`~/Sites/{project}-legacy`) as the reference to avoid content-drift false positives.
