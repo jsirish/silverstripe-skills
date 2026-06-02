@@ -1,6 +1,6 @@
 # silverstripe-skills
 
-Agent skills for [Silverstripe CMS](https://www.silverstripe.org/) development — version upgrades, Elemental content blocks, the Essentials theme stack, and deployment workflows. Maintained by [Dynamic Agency](https://www.dynamicagency.com/).
+Agent skills for [Silverstripe CMS](https://www.silverstripe.org/) development — version upgrades, Elemental content blocks, the Essentials theme stack, and deployment workflows. Maintained by [Jason Irish](https://github.com/jsirish).
 
 ## Skills
 
@@ -29,19 +29,19 @@ Requires [skills.sh](https://skills.sh) (`npx skills`).
 ### Install all skills globally (Claude Code)
 
 ```bash
-npx skills add dynamic/silverstripe-skills --skill '*' -a claude-code -g
+npx skills add jsirish/silverstripe-skills --skill '*' -a claude-code -g
 ```
 
 ### Install specific skills
 
 ```bash
-npx skills add dynamic/silverstripe-skills --skill silverstripe-version-upgrade --skill ddev-sync -a claude-code -g
+npx skills add jsirish/silverstripe-skills --skill silverstripe-version-upgrade --skill ddev-sync -a claude-code -g
 ```
 
 ### Install for multiple agents
 
 ```bash
-npx skills add dynamic/silverstripe-skills --skill '*' -a claude-code -a opencode -g
+npx skills add jsirish/silverstripe-skills --skill '*' -a claude-code -a opencode -g
 ```
 
 ### Update
