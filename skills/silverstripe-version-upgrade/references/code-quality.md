@@ -1,6 +1,24 @@
 
 ## Code Quality
 
+### Dev Dependencies
+
+Add the standard Dynamic toolkit to `composer.json`:
+
+```json
+"require-dev": {
+    "cambis/silverstan": "^2.1",
+    "ergebnis/composer-normalize": "^2.44",
+    "lekoala/silverstripe-debugbar": "^3.0",
+    "phpstan/extension-installer": "^1.3",
+    "phpunit/phpunit": "^9.6",
+    "silverleague/ideannotator": "~3.5.1",
+    "silverstripe/recipe-testing": "^3.0",
+    "squizlabs/php_codesniffer": "^3.10",
+    "wernerkrauss/silverstripe-rector": "^1.0"
+}
+```
+
 ### PHPCS
 
 ```bash
@@ -12,6 +30,17 @@ ddev exec vendor/bin/phpcs app/src/
 ```bash
 ddev exec vendor/bin/phpstan analyse app/src/
 ```
+
+### Rector (if configured)
+
+`wernerkrauss/silverstripe-rector` provides automated upgrade rules for Silverstripe CMS. Always use `--dry-run` first:
+
+```bash
+ddev exec vendor/bin/rector --dry-run
+ddev exec vendor/bin/rector  # apply when ready
+```
+
+Configuration is project-specific — see [github.com/wernerkrauss/silverstripe-rector](https://github.com/wernerkrauss/silverstripe-rector) for available rule sets.
 
 ### GitHub Actions CI (optional but recommended)
 
@@ -39,6 +68,17 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --prefer-dist
       - run: vendor/bin/phpstan analyse app/src/ --level 2
+  rector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: intl, gd, mysqli
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: vendor/bin/rector --dry-run
   phpunit:
     runs-on: ubuntu-latest
     steps:

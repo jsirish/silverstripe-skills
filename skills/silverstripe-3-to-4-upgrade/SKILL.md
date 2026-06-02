@@ -108,12 +108,38 @@ git checkout -b feature/silverstripe-4-upgrade
 
 Run `composer update --with-all-dependencies` and `composer vendor-expose`.
 
+**Add modern dev dependencies** (the standard Dynamic toolkit for quality and debugging):
+
+```json
+"require-dev": {
+    "cambis/silverstan": "^2.1",
+    "ergebnis/composer-normalize": "^2.44",
+    "lekoala/silverstripe-debugbar": "^3.0",
+    "phpstan/extension-installer": "^1.3",
+    "phpunit/phpunit": "^9.6",
+    "silverleague/ideannotator": "~3.5.1",
+    "silverstripe/recipe-testing": "^3.0",
+    "squizlabs/php_codesniffer": "^3.10",
+    "wernerkrauss/silverstripe-rector": "^1.0"
+}
+```
+
 ## Phase 4: Code & Namespace Migration
 
 SS4 heavily relies on PHP namespaces.
 
 1. **Namespacing**: Add namespaces to all classes in `app/src/` (e.g., `namespace App\Pages;` or `namespace Dynamic\Base\Page;`).
 2. **Add PSR-4 autoload to `composer.json`** — required for the namespaced classes to load:
+
+> [!TIP]
+> **Automate namespace migration with silverstripe-rector**: Instead of adding namespaces manually, use `wernerkrauss/silverstripe-rector` to automate the bulk of the work. After requiring it (see dev-dependencies above), configure `rector.php` and run:
+> ```bash
+> vendor/bin/rector --dry-run
+> vendor/bin/rector  # apply when ready
+> ```
+> This handles class-rename patterns, PSR-4 restructuring, and many SS3 deprecation fixes that are tedious to do by hand. See [github.com/wernerkrauss/silverstripe-rector](https://github.com/wernerkrauss/silverstripe-rector) for available rule sets.
+
+
    ```json
    "autoload": {
      "psr-4": { "App\\": "app/src/" }
@@ -230,13 +256,34 @@ After the upgrade builds and renders, lock down code quality with automated tool
    ```
    Run at level 1–2 initially; the SS4 upgrade introduces many dynamic calls that require baseline configuration. Use `--generate-baseline` to create a `phpstan-baseline.neon` for known false positives.
 
-3. **PHPUnit** — run the existing test suite:
+3. **Rector** — automated refactoring validation:
+   ```bash
+   ddev exec vendor/bin/rector --dry-run
+   ```
+   `silverstripe-rector` catches deprecated API usage, class-rename patterns, and namespace issues that phpstan/phpcs miss. Always run with `--dry-run` first to review changes. See the [Phase 4 tip](#phase-4-code--namespace-migration) for installation and configuration.
+
+4. **PHPUnit** — run the existing test suite:
    ```bash
    ddev exec vendor/bin/phpunit
    ```
    If no tests exist yet, this is the ideal time to add smoke tests for the upgraded page types and Elemental elements.
 
-4. **GitHub Actions CI** — automate quality gates for every PR:
+5. **Rector in CI** — add a `rector` job to `.github/workflows/ci.yml`:
+   ```yaml
+   rector:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v4
+       - uses: shivammathur/setup-php@v2
+         with:
+           php-version: '8.1'
+           extensions: intl, gd, mysqli
+           coverage: none
+       - run: composer install --no-interaction --prefer-dist
+       - run: vendor/bin/rector --dry-run
+   ```
+
+6. **GitHub Actions CI** — automate quality gates for every PR:
    ```yaml
    # .github/workflows/ci.yml
    name: CI
@@ -275,7 +322,7 @@ After the upgrade builds and renders, lock down code quality with automated tool
    > [!TIP]
    > **Start simple**: a single `ci.yml` with just PHPCS and PHPStan will catch 90% of regression issues. Add PHPUnit once the upgrade tests are written. Pin the workflow to run only on `pull_request` to avoid redundant runs on every push to a feature branch.
 
-5. **Commit the CI config** to `.github/workflows/ci.yml` as part of the upgrade branch — it keeps quality enforcement in sync with the new codebase.
+7. **Commit the CI config** to `.github/workflows/ci.yml` as part of the upgrade branch — it keeps quality enforcement in sync with the new codebase.
 
 ## Key Discoveries & Gotchas
 
