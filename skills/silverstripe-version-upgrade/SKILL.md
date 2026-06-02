@@ -11,7 +11,7 @@ Repeatable workflow for upgrading Silverstripe CMS projects (e.g. SS4 → SS5) i
 
 | Phase | Key Actions |
 |-------|-------------|
-| **1. Assessment** | Audit versions, packages, incompatibilities |
+| **1. Assessment** | Audit versions, packages, incompatibilities; clone legacy instance for VR baseline |
 | **2. Branch & PHP** | Create feature branch, update PHP to `^8.1` |
 | **3. Dependencies** | Update recipes with `--no-update`, resolve, `vendor-expose` |
 | **4. Config Migration** | Fix extension relocations, ORM relationships, templates |
@@ -52,6 +52,25 @@ ddev composer show | grep 'dynamic/\|silverstripe/\|dnadesign/'
 
 > [!TIP]
 > If the project uses `sheadawson/silverstripe-blocks`, migrate to Elemental **before** SS5 upgrade using `dynamic/silverstripe-blocks-to-elemental-migrator`.
+
+### 1.4 Legacy instance (for VR baseline)
+
+Clone the current SS4 site as a side-by-side reference before starting the upgrade. This gives you a pixel-perfect local baseline to diff against during VR verification — same approach as the SS3→SS4 upgrade pattern.
+
+**Naming convention:** clone into `~/Sites/{project}-legacy` so the upgrade lives in `~/Sites/{project}`.
+
+```bash
+cd ~/Sites
+git clone <repo> {project}-legacy
+cd {project}-legacy
+git checkout main  # or the current production branch
+ddev config --project-name {project}-legacy
+ddev start
+ddev auth ssh
+ddev exec ./sync.sh  # sync prod DB and assets
+```
+
+This gives you `https://{project}-legacy.ddev.site` — a running SS4 instance against the same data the upgrade will use. In the Build & Verify phase you'll diff this against the SS5 upgrade to confirm visual parity.
 
 ## Phase 2–3: Branch & Dependencies
 
@@ -96,6 +115,25 @@ ddev sake dev/tasks/<task-segment>
 ```
 
 Verify: Homepage, carousel, navigation, footer, CMS admin, elemental blocks.
+
+### Visual regression (optional but recommended)
+
+Diff the SS5 upgrade against the legacy SS4 instance from Phase 1.4:
+
+```bash
+# Crawl the legacy site for a URL list
+cd ~/Sites/{project}-legacy
+python ../visual-regression-upgrade/scripts/crawl_urls.py \
+  --url https://{project}-legacy.ddev.site --limit 30 --out paths.txt
+
+# Capture + diff both environments
+cd ~/Sites/{project}
+python ../visual-regression-upgrade/scripts/capture_urls.py \
+  --url https://{project}.ddev.site \
+  --paths ../{project}-legacy/paths.txt --out vr-out/ --diff
+```
+
+See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill for setup, authentication, and report interpretation.
 
 ## Key Discoveries & Gotchas
 
