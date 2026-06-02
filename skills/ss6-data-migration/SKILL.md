@@ -126,6 +126,10 @@ ddev exec vendor/bin/phpstan analyse
 > code before running `dev/build`, or `git checkout` the regenerated docblock
 > churn afterward. Tracked as installer issue #299.
 
+### GitHub Actions CI
+
+For projects using CI, add `.github/workflows/ci.yml` to run these quality gates automatically on every PR. See [silverstripe-version-upgrade](../silverstripe-version-upgrade/references/code-quality.md) for an example workflow configuration.
+
 ## Troubleshooting
 
 | Symptom | Cause / Fix |

@@ -13,6 +13,38 @@ ddev exec vendor/bin/phpcs app/src/
 ddev exec vendor/bin/phpstan analyse app/src/
 ```
 
+### GitHub Actions CI (optional but recommended)
+
+Add `.github/workflows/ci.yml` to run quality gates on every PR:
+
+```yaml
+name: CI
+on: [pull_request]
+jobs:
+  phpcs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: silverstripe/gha-phpcs@v1
+        with:
+          path: app/src/
+  phpstan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: php-actions/composer@v6
+      - run: vendor/bin/phpstan analyse app/src/ --level 2
+  phpunit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: php-actions/composer@v6
+      - run: vendor/bin/phpunit
+```
+
+> [!TIP]
+> Start with just PHPCS + PHPStan; add PHPUnit once tests exist. Run only on `pull_request` to avoid redundant per-push runs.
+
 ### Common Fixes
 
 - Update `@property $owner` annotations on extensions

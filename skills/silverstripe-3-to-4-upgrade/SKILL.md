@@ -24,6 +24,7 @@ Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe
 | **6. Data Migration** | Run file migration, Elemental tasks, and custom SQL |
 | **7. Templates** | Fix `HomePage` resolution, update `$Link` to `$URL` |
 | **8. Build & Verify** | `dev/build flush=1`, QA frontend and admin |
+| **9. Code Quality & CI** | PHPCS, PHPStan, PHPUnit, GitHub Actions |
 
 ## Phase 1: Assessment & Discovery
 
@@ -199,6 +200,73 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 
 > [!NOTE]
 > **Template Variant Naming**: Elemental uses `getAreaRelationName()` for suffixing. If a page has `has_one: ['ElementalHomePage' => ElementalArea::class]`, the variant file must be named `ElementPromos_ElementalHomePage.ss`.
+
+## Phase 8: Build & Verify
+
+1. **Run dev/build**:
+   ```bash
+   ddev sake dev/build flush=1
+   ```
+2. **Frontend QA**: Walk through the primary page types — HomePage, standard pages, blog, any custom page types. Check for:
+   - Blank pages (likely a missing `classname_value_remapping` entry or broken template resolution)
+   - Template fallback issues — use `?showtemplate=1` to confirm the correct template is resolving
+   - Broken images — `jonom/focuspoint` migrations require template updates
+3. **CMS admin QA**: Verify pages load in the CMS tree, elements render in the Elemental editor, and the SiteConfig / Settings section works.
+4. **Elemental areas**: Confirm `_Live` tables are populated. If ElementalArea_Live is empty, run the migration task's final SQL passes (see [block-to-element-migration](../block-to-element-migration/SKILL.md)).
+
+## Phase 9: Code Quality & CI
+
+After the upgrade builds and renders, lock down code quality with automated tools and CI:
+
+1. **PHPCS** — enforce coding standards:
+   ```bash
+   ddev exec vendor/bin/phpcs app/src/
+   ```
+   Common SS3→SS4 issues PHPCS catches: missing namespace declarations, outdated class references, PSR-2/PSR-12 formatting.
+
+2. **PHPStan** — static analysis (if configured):
+   ```bash
+   ddev exec vendor/bin/phpstan analyse app/src/
+   ```
+   Run at level 1–2 initially; the SS4 upgrade introduces many dynamic calls that require baseline configuration. Use `--generate-baseline` to create a `phpstan-baseline.neon` for known false positives.
+
+3. **PHPUnit** — run the existing test suite:
+   ```bash
+   ddev exec vendor/bin/phpunit
+   ```
+   If no tests exist yet, this is the ideal time to add smoke tests for the upgraded page types and Elemental elements.
+
+4. **GitHub Actions CI** — automate quality gates for every PR:
+   ```yaml
+   # .github/workflows/ci.yml
+   name: CI
+   on: [pull_request]
+   jobs:
+     phpcs:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: silverstripe/gha-phpcs@v1
+           with:
+             path: app/src/
+     phpstan:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: php-actions/composer@v6
+         - run: vendor/bin/phpstan analyse app/src/ --level 2
+     phpunit:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: php-actions/composer@v6
+         - run: vendor/bin/phpunit
+   ```
+
+   > [!TIP]
+   > **Start simple**: a single `ci.yml` with just PHPCS and PHPStan will catch 90% of regression issues. Add PHPUnit once the upgrade tests are written. Pin the workflow to run only on `pull_request` to avoid redundant runs on every push to a feature branch.
+
+5. **Commit the CI config** to `.github/workflows/ci.yml` as part of the upgrade branch — it keeps quality enforcement in sync with the new codebase.
 
 ## Key Discoveries & Gotchas
 
