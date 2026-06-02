@@ -108,11 +108,11 @@ git checkout -b feature/silverstripe-4-upgrade
 
 Run `composer update --with-all-dependencies` and `composer vendor-expose`.
 
-**Add modern dev dependencies** (the standard Dynamic toolkit for quality and debugging). Version constraints should match the target Silverstripe major:
+**Add modern dev dependencies** (the standard Dynamic toolkit for quality and debugging):
 
 ```json
 "require-dev": {
-    "cambis/silverstan": "^2.1",
+    "cambis/silverstan": "^1.0",
     "ergebnis/composer-normalize": "^2.44",
     "lekoala/silverstripe-debugbar": "^3.0",
     "phpstan/extension-installer": "^1.3",
@@ -125,7 +125,7 @@ Run `composer update --with-all-dependencies` and `composer vendor-expose`.
 ```
 
 > [!NOTE]
-> **Version adjustments per SS major**: For SS4 projects use `silverstripe/recipe-testing ^2.0` and `cambis/silverstan ^1.0`. For SS5+ use `recipe-testing ^3.0` and `cambis/silverstan ^2.1`. Check the latest release on Packagist if in doubt.
+> **Version adjustments per SS major**: The constraints above target SS4. For SS5+ projects bump `cambis/silverstan` to `^2.1` and `silverstripe/recipe-testing` to `^3.0`. Check the latest release on Packagist if in doubt.
 
 ## Phase 4: Code & Namespace Migration
 
