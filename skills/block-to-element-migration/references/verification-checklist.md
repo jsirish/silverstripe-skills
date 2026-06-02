@@ -68,7 +68,7 @@ WHERE p.ElementalAreaID = 0 OR pl.ElementalAreaID = 0 OR p.ElementalAreaID != pl
 For each combination of (page type × element type × area variant), pick one representative page and:
 
 - [ ] **Fetch HTML from prod** and **from local** (`curl -s` both, save to temp files).
-- [ ] **Strip dynamic noise** — server-rendered timestamps, CSRF tokens, asset hashes, dev-navigator block (`<div Live>...</div>`). The `safeharbor-data-migration` skill has a `strip_dynamic_bits.sh` helper.
+- [ ] **Strip dynamic noise** — server-rendered timestamps, CSRF tokens, asset hashes, dev-navigator block (`<div Live>...</div>`). A data-migration skill's `strip_dynamic_bits.sh` helper can automate this.
 - [ ] **Run a structural diff** on the cleaned files. Pass = only asset-host differences (image URLs point to different domains).
 - [ ] **Browser-side check** — open both URLs side-by-side via Chrome MCP or just two browser windows.
    - Heights match? Widths match? Spacing match?

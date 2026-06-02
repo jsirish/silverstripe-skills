@@ -8,7 +8,7 @@ In SilverStripe 4 with Elemental, "areas" are explicit `has_one` relations on th
 
 ## How the three reference projects set this up
 
-### safeharbor (Page + Sidebar)
+### example-custom (Page + Sidebar)
 
 ```yaml
 # app/_config/elemental.yml
@@ -33,7 +33,7 @@ private const AREA_MAP = [
 ];
 ```
 
-### rockline-iatric (HomePage has its own area)
+### example-manufacturing (HomePage has its own area)
 
 ```php
 // HomePage gets a separate ElementalArea relation
@@ -49,7 +49,7 @@ $areaColumn = $isHomePage ? 'ElementalHomePageID' : 'ElementalAreaID';
 $areaTable = $isHomePage ? 'HomePage' : 'Page';
 ```
 
-### youth-sailing (HomePage has THREE areas)
+### example-multiarea (HomePage has THREE areas)
 
 ```yaml
 # app/_config/elemental.yml

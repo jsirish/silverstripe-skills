@@ -8,7 +8,7 @@
 
 ---
 
-Detailed patterns for migrating `sheadawson/silverstripe-blocks` or `dynamic/dynamic-blocks` to `dnadesign/silverstripe-elemental` during an SS3→SS4 upgrade. Patterns distilled from rockline-iatric, youth-sailing, and sheboygan-safeharbor migrations.
+Detailed patterns for migrating `sheadawson/silverstripe-blocks` or `dynamic/dynamic-blocks` to `dnadesign/silverstripe-elemental` during an SS3→SS4 upgrade. Patterns distilled from example-manufacturing, example-multiarea, and example-custom migrations.
 
 ## Architecture: one task or two?
 

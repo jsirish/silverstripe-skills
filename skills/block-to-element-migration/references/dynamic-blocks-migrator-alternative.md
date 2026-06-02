@@ -4,7 +4,7 @@ A YAML-configurable alternative to the hand-rolled `BlockMigrationTask`. Publish
 
 **Module:** [`dynamic/silverstripe-blocks-to-elemental-migrator`](https://addons.silverstripe.org/add-ons/dynamic/silverstripe-blocks-to-elemental-migrator) ([Packagist](https://packagist.org/packages/dynamic/silverstripe-blocks-to-elemental-migrator))
 
-**None of the three reference projects use it** (rockline-iatric, youth-sailing, safeharbor all hand-rolled their tasks). This doc captures when you'd reach for it instead.
+**None of the three reference projects use it** (example-manufacturing, example-multiarea, example-custom all hand-rolled their tasks). This doc captures when you'd reach for it instead.
 
 ## What it provides
 
@@ -40,9 +40,9 @@ Dynamic\BlockMigration\Tasks\BlocksToElementsTask:
 
 ❌ You want full control over the SQL — e.g. denormalising data, computing derived fields, special-case publishing logic.
 
-❌ You're already comfortable with the safeharbor-shaped `BlockMigrationTask` and the project only has 3–5 block types. Adding a composer dep for a small mapping table isn't worth it.
+❌ You're already comfortable with the example-custom-shaped `BlockMigrationTask` and the project only has 3–5 block types. Adding a composer dep for a small mapping table isn't worth it.
 
-❌ You want zero composer dependencies beyond `dnadesign/silverstripe-elemental`. (Rockline and youth-sailing both made this call.)
+❌ You want zero composer dependencies beyond `dnadesign/silverstripe-elemental`. (Example-manufacturing and example-multiarea both made this call.)
 
 ## How to add it to a project
 
@@ -87,9 +87,9 @@ ddev sake dev/tasks/custom-block-migration    # Project-local: the oddballs (Fle
 
 Best guess from reading the code:
 
-- **rockline-iatric** — predates the module's maturity; was implemented in 2024 when the module was less battle-tested. Custom Link → LinkableLink migration logic is significant and would have needed extension.
-- **youth-sailing** — has 10+ block types including project-specific custom ones (FormBlock, RecentBlogPostsBlock with custom controller hooks). Extension surface would have been large.
-- **safeharbor** — the refactor explicitly aimed to minimise composer dependencies. The hand-rolled task is ~600 lines and self-contained; adding a module dep for that scope wasn't a clear win.
+- **example-manufacturing** — predates the module's maturity; was implemented in 2024 when the module was less battle-tested. Custom Link → LinkableLink migration logic is significant and would have needed extension.
+- **example-multiarea** — has 10+ block types including project-specific custom ones (FormBlock, RecentBlogPostsBlock with custom controller hooks). Extension surface would have been large.
+- **example-custom** — the refactor explicitly aimed to minimise composer dependencies. The hand-rolled task is ~600 lines and self-contained; adding a module dep for that scope wasn't a clear win.
 
 If you're starting fresh on a project with mostly-standard blocks, **try the Dynamic module first** — the agency built it precisely to avoid the hand-rolled pattern. Only fall back to the skeleton in this skill if the module proves too constraining.
 

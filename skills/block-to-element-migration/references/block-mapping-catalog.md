@@ -1,6 +1,6 @@
 # Block Class → Element Class Catalog
 
-A composite catalog from three production migrations (rockline-iatric, youth-sailing, safeharbor). For each legacy block class, this lists the SS4 Element target, the composer module that provides it, and a note about field-name changes that matter for the template-parity pass.
+A composite catalog from three production migrations (example-manufacturing, example-multiarea, example-custom). For each legacy block class, this lists the SS4 Element target, the composer module that provides it, and a note about field-name changes that matter for the template-parity pass.
 
 ## Standard mappings
 
@@ -46,8 +46,8 @@ In SS3, `SiteTree_Blocks` allowed the same `BlockID` to attach to multiple pages
 ## Notes on custom vs Dynamic-module elements
 
 Two of the three reference projects chose differently:
-- **rockline-iatric** + **youth-sailing** use the `dynamic/silverstripe-elemental-*` composer modules
-- **safeharbor** uses custom `App\Elements\*` classes (no dependency on the dynamic modules)
+- **example-manufacturing** + **example-multiarea** use the `dynamic/silverstripe-elemental-*` composer modules
+- **example-custom** uses custom `App\Elements\*` classes (no dependency on the dynamic modules)
 
 The custom approach has more control over HTML but reproduces work the Dynamic modules already do. Default to the Dynamic modules unless:
 - The project already has heavy custom data on its blocks that wouldn't map cleanly

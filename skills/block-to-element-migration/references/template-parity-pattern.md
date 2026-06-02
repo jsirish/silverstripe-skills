@@ -85,7 +85,7 @@ Rewrite selectors:
 
 Defer this until after migration is verified. **Option A is the right call during migration.**
 
-## Worked example — youth-sailing
+## Worked example — example-multiarea
 
 **SS3 source:** `themes/sys/templates/SheaDawson/Blocks/Model/ContentBlock_HomeContent.ss`
 
@@ -167,7 +167,7 @@ Defer this until after migration is verified. **Option A is the right call durin
 
 The HTML structure — the divs, the column classes, the inner nesting, the typography div, the link wrappers — is **identical**. CSS works untouched.
 
-## Worked example — safeharbor PromoBlock_SideBar.ss
+## Worked example — example-custom PromoBlock_SideBar.ss
 
 See [../examples/ElementContent_HomeContentElementalArea.ss.example](../examples/ElementContent_HomeContentElementalArea.ss.example) for another annotated side-by-side.
 

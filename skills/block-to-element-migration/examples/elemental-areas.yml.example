@@ -36,7 +36,7 @@ Page:
 DNADesign\Elemental\Extensions\ElementalAreasExtension:
   keep_content_fields: true
 
-# HomePage with multiple distinct content areas (youth-sailing pattern)
+# HomePage with multiple distinct content areas (example-multiarea pattern)
 App\Pages\HomePage:
   has_one:
     HomeLeftElementalArea: DNADesign\Elemental\Models\ElementalArea
@@ -52,7 +52,7 @@ App\Pages\HomePage:
     - HomeContentElementalArea
 
 # Alternative — HomePage with one area, rendered uniquely from default Page area
-# (rockline-iatric pattern)
+# (example-manufacturing pattern)
 #
 # App\Pages\HomePage:
 #   has_one:

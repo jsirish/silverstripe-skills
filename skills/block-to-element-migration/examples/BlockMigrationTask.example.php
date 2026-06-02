@@ -3,8 +3,8 @@
 /**
  * EXAMPLE — full worked block migration task
  *
- * Synthesised from safeharbor with extra patterns from rockline-iatric and
- * youth-sailing. Migrates 5 block types, handles 3 area variants, and
+ * Synthesised from example-custom with extra patterns from example-manufacturing and
+ * example-multiarea. Migrates 5 block types, handles 3 area variants, and
  * demonstrates child-sub-object migration.
  *
  * Drop into app/src/Tasks/BlockMigrationTask.php, adjust the namespace,

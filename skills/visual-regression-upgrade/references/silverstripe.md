@@ -105,7 +105,7 @@ Common one-sided elements to include in `"*"` masks:
 
 ### Custom Elemental elements (project-specific)
 
-For projects using the `dynamic/safeharbor` PageSection element pattern, also mask:
+For projects using the `dynamic/example-custom` PageSection element pattern, also mask:
 
 ```json
 {

@@ -10,7 +10,7 @@ description: >
 
 # Silverstripe 3 to 4 Upgrade Skill
 
-Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe 4. Based on the successful migration of Iatric Manufacturing, this guide details the exact steps, architectural shifts, and critical gotchas when moving to the SS4 framework.
+Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe 4. Based on the successful migration of Example Manufacturing, this guide details the exact steps, architectural shifts, and critical gotchas when moving to the SS4 framework.
 
 ## Upgrade Phases (Summary)
 
@@ -80,7 +80,7 @@ This gives you `https://{project}-legacy.ddev.site` — a running SS3 instance a
 - Diagnose "was this feature even working on prod?" without loading the live site
 
 > [!TIP]
-> The **sheboygan-safeharbor** project is the canonical reference for this pattern: `~/Sites/safeharbor` (SS4 upgrade) vs `~/Sites/safeharbor-legacy` (SS3 legacy). Also see `~/Sites/youth-sailing` / `~/Sites/youth-sailing-legacy` for an earlier example. Both use the same ddev config structure.
+> The **example-custom** project is the canonical reference for this pattern: `~/Sites/example-custom` (SS4 upgrade) vs `~/Sites/example-custom-legacy` (SS3 legacy). Also see `~/Sites/example-multiarea` / `~/Sites/example-multiarea-legacy` for an earlier example. Both use the same ddev config structure.
 
 ### 1c. Package Assessment (original step)
 

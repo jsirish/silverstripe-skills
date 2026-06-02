@@ -21,7 +21,7 @@ description: >
 
 A repeatable workflow for moving legacy SilverStripe Blocks (sheadawson or dynamic-blocks modules) into the modern Elemental system, while preserving exact visual parity with the pre-upgrade site.
 
-Distilled from three production migrations: **rockline-iatric**, **youth-sailing**, and **sheboygan-safeharbor**. Each project re-invented the same skeleton — this skill captures the shared shape so you don't start from scratch.
+Distilled from three production migrations: **example-manufacturing**, **example-multiarea**, and **example-custom**. Each project re-invented the same skeleton — this skill captures the shared shape so you don't start from scratch.
 
 ---
 

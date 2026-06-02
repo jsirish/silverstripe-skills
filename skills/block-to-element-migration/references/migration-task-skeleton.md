@@ -1,6 +1,6 @@
 # Migration Task Skeleton
 
-The canonical `BlockMigrationTask.php`. Distilled from the safeharbor refactor (the cleanest of the three reference implementations). Copy verbatim into `app/src/Tasks/BlockMigrationTask.php`, then fill in the three highlighted sections:
+The canonical `BlockMigrationTask.php`. Distilled from the example-custom refactor (the cleanest of the three reference implementations). Copy verbatim into `app/src/Tasks/BlockMigrationTask.php`, then fill in the three highlighted sections:
 
 1. **`SKIP_CLASSES`** — block types your project doesn't migrate (no SS4 equivalent)
 2. **`AREA_MAP`** — your project's `BlockArea` strings → page column lookup

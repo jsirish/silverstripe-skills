@@ -19,7 +19,7 @@ SS4 Elemental's `BaseElement::forTemplate()` calls `getRenderTemplates()`, which
 
 ## Examples from production
 
-Youth-sailing has the most extensive use of the pattern:
+Example-multiarea has the most extensive use of the pattern:
 
 ```
 themes/sys/templates/Dynamic/Elements/Promos/Elements/
@@ -35,9 +35,9 @@ Same `ElementPromos` Element class. Four different renderings driven by which ar
 - An element in `HomePage.HomeLeftElementalArea` resolves to `ElementPromos_HomeLeftElementalArea.ss`.
 - An element in any other area falls through to `ElementPromos.ss`.
 
-Rockline-iatric uses it for one variant:
+Example-manufacturing uses it for one variant:
 ```
-themes/iatric/templates/Dynamic/Elements/Promos/Elements/
+themes/example-manufacturing/templates/Dynamic/Elements/Promos/Elements/
 ├── ElementPromos.ss
 └── ElementPromos_ElementalHomePage.ss
 ```
@@ -67,13 +67,13 @@ The SS3 → SS4 area mapping (from [area-relation-mapping.md](area-relation-mapp
 | SS3 BlockArea | SS4 relation name | Template suffix |
 |---------------|--------------------|-----------------|
 | `Sidebar` | `SidebarElementalArea` | `_SidebarElementalArea` |
-| `HomeContent` (safeharbor — main area) | `ElementalArea` | `_ElementalArea` (or just default) |
-| `HomeContent` (youth-sailing — separate area) | `HomeContentElementalArea` | `_HomeContentElementalArea` |
-| `HomeLeft` (youth-sailing) | `HomeLeftElementalArea` | `_HomeLeftElementalArea` |
-| `HomeRight` (youth-sailing) | `HomeRightElementalArea` | `_HomeRightElementalArea` |
-| n/a (rockline-iatric — HomePage has its own area) | `ElementalHomePage` | `_ElementalHomePage` |
+| `HomeContent` (example-custom — main area) | `ElementalArea` | `_ElementalArea` (or just default) |
+| `HomeContent` (example-multiarea — separate area) | `HomeContentElementalArea` | `_HomeContentElementalArea` |
+| `HomeLeft` (example-multiarea) | `HomeLeftElementalArea` | `_HomeLeftElementalArea` |
+| `HomeRight` (example-multiarea) | `HomeRightElementalArea` | `_HomeRightElementalArea` |
+| n/a (example-manufacturing — HomePage has its own area) | `ElementalHomePage` | `_ElementalHomePage` |
 
-**Note on safeharbor's HomeContent:** safeharbor reuses the main `ElementalArea` for the HomePage's HomeContent area (no separate `has_one`). For this case, the area variant template would be named `ElementPromo_ElementalArea.ss` — but it only takes effect for elements in the main area (which is everywhere on standard pages). When you want different rendering for the HomePage specifically and the main area is shared, either declare a dedicated HomePage relation (matching youth-sailing's pattern) or use a different approach (e.g. check `$Page.ClassName` in the default template).
+**Note on example-custom's HomeContent:** example-custom reuses the main `ElementalArea` for the HomePage's HomeContent area (no separate `has_one`). For this case, the area variant template would be named `ElementPromo_ElementalArea.ss` — but it only takes effect for elements in the main area (which is everywhere on standard pages). When you want different rendering for the HomePage specifically and the main area is shared, either declare a dedicated HomePage relation (matching example-multiarea's pattern) or use a different approach (e.g. check `$Page.ClassName` in the default template).
 
 ## The ElementHolder template
 
