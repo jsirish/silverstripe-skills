@@ -82,7 +82,7 @@ Both scripts accept identical command-line flags to isolate deployments or test 
 
 ## DeployHQ / Ploi caveats
 
-`sync.sh` / `deploy.sh` move data; the actual code deploy is usually handled by **DeployHQ** (build + SSH) onto a **Ploi**-managed server. Three behaviours of that stack each caused a production-style failure and aren't obvious from the scripts above.
+`sync.sh` / `deploy.sh` move data; the actual code deploy is usually handled by **DeployHQ** (build + SSH) onto a **Ploi**-managed server. Five behaviours of that stack each caused a production-style failure and aren't obvious from the scripts above.
 
 > [!CAUTION]
 > **`composer install` skips packages whose constraint is already satisfied.** On a server with an existing `vendor/`, `composer install` will **not** re-fetch a package just because the locked content changed — leaving stale or mismatched code that passes locally but breaks the deploy. For a clean parity deploy, wipe first:
@@ -99,3 +99,18 @@ Both scripts accept identical command-line flags to isolate deployments or test 
 > ```text
 > SS_DATABASE_SERVER="127.0.0.1"
 > ```
+
+> [!CAUTION]
+> **`REMOTE_*` and `PREPROD_*` must point at DIFFERENT hosts — if both scripts use `REMOTE_*`, they target the same server.** `sync.sh` reads `REMOTE_*` (production — pull FROM). `deploy.sh` reads `PREPROD_*` (pre-prod/staging — push TO). When `.env` only defines `REMOTE_*` and `deploy.sh` was left reading the same vars, `sync.sh` and `deploy.sh` both targeted pre-prod: data pulled *from* pre-prod, deployed *to* pre-prod, and production was never touched. The failure is completely silent. Always verify before any migration work:
+> ```bash
+> grep -E "REMOTE_HOST|PREPROD_HOST" .env    # must be two DIFFERENT hosts
+> grep -E "REMOTE_|PREPROD_" deploy.sh       # deploy.sh must read PREPROD_*
+> ```
+
+> [!WARNING]
+> **`sync.sh --dry-run` creates — and leaves — a full production DB dump in `/tmp` on the remote server.** The `mysqldump` runs before the dry-run gate; the remote cleanup (`ssh ... rm`) was gated behind `!dry-run`. Every `--dry-run` silently accumulates a complete production database dump on the server. This is a data-at-rest exposure. The fix is to make the remote cleanup unconditional — it must run in both modes since the dump is always created:
+> ```bash
+> # Cleanup — always remove the remote dump (created even in --dry-run)
+> ssh ${REMOTE_USER}@${REMOTE_HOST} "rm -f ${REMOTE_DUMP_PATH}"
+> ```
+> Audit your local `sync.sh` to confirm cleanup is not gated on dry-run mode.
