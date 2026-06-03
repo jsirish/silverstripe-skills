@@ -5,15 +5,19 @@ description: Verify visual parity between two web environments (production vs up
 
 # Visual Regression for CMS Upgrades
 
-Compares two deployed environments (e.g. production vs an upgraded UAT site) screenshot-by-screenshot and emits a single self-contained HTML report classifying every page as PASS / WARN / FAIL.
+Compares two environments screenshot-by-screenshot and emits a single self-contained HTML report classifying every page as PASS / WARN / FAIL. Two modes:
 
-Use this whenever you need to prove — or disprove — that an upgrade looks identical to the live site.
+- **Cross-server** (production vs upgraded UAT) — the classic "does the deployed upgrade match live" check.
+- **Same-machine** (local legacy vs local upgrade) — the preferred mid-migration mode when the upgrade isn't deployed yet. Identical fonts/CDN/APIs on both sides mean every diff is a real layout difference, not environmental noise. See "Preferred during migration" below.
+
+Use this whenever you need to prove — or disprove — that an upgrade looks identical to the baseline.
 
 ## When to use
 
 Trigger phrases:
 - "does the upgrade look the same as prod"
 - "compare prod and UAT visually"
+- "compare the legacy and upgraded site locally"
 - "visual regression check"
 - "screenshot diff between two sites"
 - "the layout looks different after the upgrade"
@@ -61,6 +65,27 @@ Optional flags:
 
 Writes `vr-out/prod/<slug>.png`, `vr-out/local/<slug>.png`, and `vr-out/manifest.json`.
 
+### Preferred during migration: same-machine legacy comparison
+
+When the upgraded site isn't on a public server yet, don't wait for a deploy — compare the local source-version instance against the local target-version instance. Same machine, same browser, identical fonts, no CDN/DNS variance, no API-key domain restrictions, so the environmental noise floor disappears and **every diff is a real layout difference**.
+
+Point `--prod` at the legacy local baseline and `--local` at the upgraded local (the flag names are just "left/right" — `--prod` is whatever you treat as the reference). `--insecure` handles `.ddev.site` self-signed certs.
+
+```bash
+python scripts/capture.py \
+  --prod  https://{project}-legacy.ddev.site \   # source version (e.g. SS3) local baseline
+  --local https://{project}.ddev.site \           # target version (e.g. SS4) local upgrade
+  --paths-file paths.txt --wait 2.0 --insecure --out ./vr-legacy
+```
+
+**Acceptance bar (same-machine):** every page PASS or WARN < 2%. Any FAIL, and any WARN > 2%, is a genuine regression worth investigating — not noise. (Field evidence: this mode isolated a 25px blog-card height delta from `LimitWordCount` vs `Summary()` truncation, and a contact-form field-spacing change — both invisible under cross-server font noise.)
+
+Mask domain-restricted widgets that can't render locally — e.g. a Google static map whose API key is locked to the prod domain renders a "domain not authorized" placeholder on *both* locals, so it must be masked, not chased:
+
+```json
+{ "/contact-us/": [".addressMap"] }
+```
+
 ### Step 3 — Diff + report
 
 ```bash
@@ -78,6 +103,8 @@ Produces:
 | < 0.5% | **PASS** (green) | Anti-aliasing / sub-pixel font rendering — ignore |
 | 0.5 – 5% | **WARN** (amber) | Likely a real but minor change — inspect (margin shift, image swap, color tweak) |
 | > 5% | **FAIL** (red) | Significant regression — investigate before signing off |
+
+These bands are calibrated for **cross-server** captures, where sub-pixel font/CDN variance puts a noise floor under every page. For **same-machine** captures (local legacy vs local upgrade) that floor is gone — treat anything **> 2% as actionable** and expect clean pages to sit well under 0.5%.
 
 Tune masks and re-run if WARN/FAIL pages are all caused by the same dynamic widget.
 
@@ -113,13 +140,14 @@ open ./vr-out/report/index.html
 | Auth fails on UAT | Site uses form login, not basic auth | Capture cookies via browser devtools, save as `cookies.json` |
 | Diff image looks like static | Both screenshots loaded but viewports differ | Confirm `--viewport` matches; some themes are width-responsive |
 | `playwright._impl._errors.Error: net::ERR_CERT_AUTHORITY_INVALID` | Self-signed UAT cert | Use `--insecure` flag (sets `ignore_https_errors=True`) |
+| Diff localized to a map/embed, identical placeholder both sides | API key is domain-restricted (renders only on the prod domain) | Mask the widget selector; verify on the real prod/pre-prod domain |
 
 ## SilverStripe-specific notes
 
 See `references/silverstripe.md` for the full rundown. Quick checklist:
 
 - Append `?flush=1` to the **first** path on each side (or pass it as the first entry in `--paths`) to bust template/manifest caches
-- Compare **Live → Live**, never Live → Stage
+- Cross-server mode: compare **Live → Live**, never Live → Stage (same-machine mode compares each local instance's published front-end)
 - Admin paths (`/admin`, `/Security/login`) need auth — usually capture with cookies, not basic auth
 - If UAT can't reach `fonts.googleapis.com`, mask `<link rel="stylesheet">` font-driven regions
 - Missing images on UAT → check `assets/.protected/` symlink and `_resources/` publishing
