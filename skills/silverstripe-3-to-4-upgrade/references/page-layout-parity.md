@@ -51,7 +51,7 @@ SS3 blog rendered a plain `<div class="WidgetHolder">` with plain links. The SS4
 SS3 sites using `SectionNavigationBlock` (often applied site-wide via a BlockSet) have **no SS4 equivalent**. Recreate it as a `SectionNav.ss` include driven by `$Menu(2)`, carrying the legacy CSS classes (`sectionnavigationblock block`) so the existing CSS applies.
 
 Two gotchas that cause phantom sidebars:
-- **Only render when the parent has ≥3 children** (`$parent->Children().Count >= 3` / `$parent->Children()->count() >= 3`) — matching SS3 behaviour. Otherwise 2-sibling pages get a sidebar SS3 never showed.
+- **Only render when the parent has ≥3 children** — matching SS3 behaviour. Otherwise 2-sibling pages get a sidebar SS3 never showed. In a template: `<% if $Parent.Children.Count >= 3 %>`; in PHP (e.g. a custom `canShowSectionNav()` method): `$this->getParent()->Children()->count() >= 3`.
 - **Apply it only to the page types prod did.** If prod omitted section nav on Blog / BlogPost / individual StaffMember pages, omit it there too.
 
 ## 5. `MenuTitle` vs `Title` in nav (`&` vs "and")
