@@ -20,7 +20,7 @@ Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe
 > Apply one test before any action: **"does this already exist natively in SS4?"** If a field, class, or data shape already exists in the target version, it must not be transformed. Only run a migration task for data that a **removed or renamed class** genuinely requires.
 >
 > - **Markup side:** When a page looks wrong after the upgrade, the default hypothesis is a missing wrapper element or a dropped legacy CSS class — not a layout that needs re-authoring. The SS3 CSS almost always still works once the markup it targets is back. See [references/page-layout-parity.md](references/page-layout-parity.md).
-> - **Data side:** When a migration task transforms content that was already native in SS4, it breaks things for zero benefit. Example: `MigrateContentToElement` moves `SiteTree.Content` into Elemental and blanks the field — but SS4 still has `$Content` natively and the theme renders it directly. Running the task silently broke blog excerpts and page layout while adding no value. See [issue #18](https://github.com/jsirish/silverstripe-skills/issues/18).
+> - **Data side:** When a migration task transforms content that was already native in SS4, it breaks things for zero benefit. Example: `MigrateContentToElement` moves `SiteTree.Content` into Elemental and blanks the field — but SS4 still has `$Content` natively and the theme renders it directly. Running the task silently broke blog excerpts and page layout while adding no value, so it's been pulled from the default sequence — see the CAUTION in [Phase 6](#phase-6-data-migration-tasks) and [issue #18](https://github.com/jsirish/silverstripe-skills/issues/18).
 > - Defer any genuine redesign to a separate, post-parity phase. This is the same "one rule" the [block-to-element-migration](../block-to-element-migration/SKILL.md) skill applies at the block-template level — it holds for the whole project.
 
 ## Upgrade Phases (Summary)
@@ -238,12 +238,20 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
    ddev sake dev/tasks/MigrateFileTask
    ```
 
-3. **Migrate Inline Content to Elemental**
-   ```bash
-   ddev sake dev/tasks/DNADesign-Elemental-Tasks-MigrateContentToElement
-   ```
+> [!CAUTION]
+> **`MigrateContentToElement` — only run if your SS4 theme does NOT render `$Content` natively.**
+> This vendor task (`dev/tasks/DNADesign-Elemental-Tasks-MigrateContentToElement`) moves
+> `SiteTree.Content` into an `ElementContent` block and then **blanks `Content`**. If `Page.ss` /
+> `BlogPost.ss` / your page templates output `$Content` directly — the Dynamic base-site default —
+> do **NOT** run it. It empties those fields and breaks blog listing excerpts (`$Summary`/`$Excerpt`
+> derive from `Content`), content alignment, and anything else reading `$Content`, for no benefit.
+>
+> Decide with the minimal-transformation test from [Philosophy](#philosophy-parity-not-redesign):
+> `SiteTree.Content` exists natively in both SS3 and SS4, so it must not be transformed. Only migrate
+> content into Elemental if the project is *deliberately* adopting an Elemental-only content
+> architecture. (This task is **not** in the default sequence for exactly this reason.)
 
-4. **Custom Block Migration**
+3. **Custom Block Migration**
    ```bash
    ddev sake dev/tasks/block-migration
    ```
