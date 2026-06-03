@@ -79,3 +79,23 @@ Both scripts accept identical command-line flags to isolate deployments or test 
 
 > [!TIP]
 > Ensure a local deployment task involving heavy computation (e.g. `GalleryResampleTask`) is run locally *before* utilizing `deploy.sh --assets` to offload processing burden successfully from the remote VPS.
+
+## DeployHQ / Ploi caveats
+
+`sync.sh` / `deploy.sh` move data; the actual code deploy is usually handled by **DeployHQ** (build + SSH) onto a **Ploi**-managed server. Three behaviours of that stack each caused a production-style failure and aren't obvious from the scripts above.
+
+> [!CAUTION]
+> **`composer install` skips packages whose constraint is already satisfied.** On a server with an existing `vendor/`, `composer install` will **not** re-fetch a package just because the locked content changed — leaving stale or mismatched code that passes locally but breaks the deploy. For a clean parity deploy, wipe first:
+> ```bash
+> rm -rf vendor && composer install --no-dev -o
+> ```
+> Add `rm -rf vendor` to the DeployHQ post-deploy SSH command (or build step) so every deploy starts from a clean vendor tree.
+
+> [!WARNING]
+> **DeployHQ deletes files that are removed from git.** When a tracked file is **de-tracked** (removed from the repo), DeployHQ deletes it from the server on the next deploy. This silently wiped a server's `.env` after it was removed from version control. Keep server-only files (`.env`, secrets, uploaded assets outside `public/assets/`) in DeployHQ's **config files** / **excluded paths** feature, or recreate them out-of-band — never assume a de-tracked file survives on the server.
+
+> [!WARNING]
+> **Ploi requires `SS_DATABASE_SERVER=127.0.0.1`, not `localhost`.** On Ploi-managed servers, `localhost` resolves to a MySQL **socket path** that the SS4 DB layer can't use, and the connection fails. Use the TCP loopback in the server `.env`:
+> ```text
+> SS_DATABASE_SERVER="127.0.0.1"
+> ```
