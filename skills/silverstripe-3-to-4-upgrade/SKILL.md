@@ -310,7 +310,7 @@ After the upgrade builds and renders, lock down code quality with automated tool
 
 1. **PHPCS** — enforce coding standards:
    ```bash
-   ddev exec vendor/bin/phpcs app/src/
+   ddev exec vendor/bin/phpcs app/src/ app/tests/
    ```
    Common SS3→SS4 issues PHPCS catches: missing namespace declarations, outdated class references, PSR-2/PSR-12 formatting.
 
@@ -320,7 +320,11 @@ After the upgrade builds and renders, lock down code quality with automated tool
    ```
    Run at level 1–2 initially; the SS4 upgrade introduces many dynamic calls that require baseline configuration. Use `--generate-baseline` to create a `phpstan-baseline.neon` for known false positives.
 
-   **Wire in the SilverStripe extension or you'll drown in false positives.** Plain PHPStan flags every SS magic method (`$page->StaffMembers()`, `$this->UtilityLinks()`, `getStaffMembers()`) as an error. `cambis/silverstan` (already in the dev-deps in [Phase 3](#phase-3-dependencies--branching)) teaches PHPStan about SS's dynamic ORM/`has_one`/`has_many` calls. With `phpstan/extension-installer` present it auto-registers; otherwise add it to `phpstan.neon`:
+   **Wire in the SilverStripe extension or you'll drown in false positives.** Plain PHPStan flags every SS magic method (`$page->StaffMembers()`, `$this->UtilityLinks()`, `getStaffMembers()`) as an error. `cambis/silverstan` teaches PHPStan about SS's dynamic ORM/`has_one`/`has_many` calls — install it if not already in your dev-deps (it's included in the [Phase 3](#phase-3-dependencies--branching) standard toolkit):
+   ```bash
+   composer require --dev cambis/silverstan
+   ```
+   With `phpstan/extension-installer` present it auto-registers; otherwise add it to `phpstan.neon`:
    ```neon
    includes:
        - vendor/cambis/silverstan/extension.neon
@@ -338,6 +342,9 @@ After the upgrade builds and renders, lock down code quality with automated tool
    ddev exec vendor/bin/phpunit
    ```
    If no tests exist yet, this is the ideal time to add smoke tests for the upgraded page types and Elemental elements.
+
+   > [!NOTE]
+   > The PHPCS, PHPStan, and PHPUnit commands above are consistent with the shared code-quality reference in [silverstripe-version-upgrade/references/code-quality.md](../silverstripe-version-upgrade/references/code-quality.md), which also covers GitHub Actions CI setup and common fixes.
 
 5. **Rector in CI** — add a `rector` job to `.github/workflows/ci.yml`:
    ```yaml
