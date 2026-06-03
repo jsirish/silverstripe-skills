@@ -72,6 +72,12 @@ Verify the following before proceeding:
 
 > **⚠️ WARNING:** `sync.sh` will **drop and overwrite** your local database and assets with production data. Any local content changes (uncommitted DB changes, uploaded files) will be **permanently lost**. Ensure you've committed any work-in-progress before proceeding.
 
+> [!IMPORTANT]
+> Confirm `sync.sh` pulls from PRODUCTION, not pre-prod/UAT:
+> `grep REMOTE_HOST .env` — must be your production server.
+> `REMOTE_*` = prod (sync FROM); `PREPROD_*` = pre-prod (deploy TO). If both
+> sets point at the same host, you are syncing from the wrong environment.
+
 5. **Sync remote database and assets** (will prompt for confirmation — answer `Y`):
    ```bash
    ddev exec ./sync.sh
@@ -88,6 +94,26 @@ Verify the following before proceeding:
      ddev sake dev/build
    fi
    ```
+
+### Phase 4: Major-version upgrades — run the migration tasks
+
+After `dev/build`, a synced DB from a *different major version* contains
+source-version data in the target schema. It is NOT ready to serve. Run the
+project's migration runbook:
+
+```bash
+ls .claude/commands/ | grep -i migrat      # project /command
+ls .agent/skills/ 2>/dev/null              # project-specific skill
+```
+
+If none exists, see the `ss5-data-migration` / `silverstripe-3-to-4-upgrade`
+skills for the task sequence, and formalize a project-specific runbook (strongly
+recommended — each project's task list differs; `ss6-data-migration` is the
+canonical example of one).
+
+Do NOT assume the site is ready just because pages render —
+`classname_value_remapping` makes pages resolve, but block/settings/form/file
+data is still unmigrated.
 
 ---
 
