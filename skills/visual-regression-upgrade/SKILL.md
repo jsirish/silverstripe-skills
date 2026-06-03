@@ -67,7 +67,7 @@ Writes `vr-out/prod/<slug>.png`, `vr-out/local/<slug>.png`, and `vr-out/manifest
 
 ### Preferred during migration: same-machine legacy comparison
 
-When the upgraded site isn't on a public server yet, don't wait for a deploy — compare the local source-version instance against the local target-version instance. Same machine, same browser, identical fonts, no CDN/DNS variance, no API-key domain restrictions, so the environmental noise floor disappears and **every diff is a real layout difference**.
+When the upgraded site isn't on a public server yet, don't wait for a deploy — compare the local source-version instance against the local target-version instance. Same machine, same browser, identical fonts, no CDN/DNS variance — the environmental noise floor disappears and **every diff is a real layout difference**. The one exception: widgets whose API key is domain-locked to the prod domain (e.g. Google static maps) will render a placeholder on both locals and must be masked rather than treated as a regression.
 
 Point `--prod` at the legacy local baseline and `--local` at the upgraded local (the flag names are just "left/right" — `--prod` is whatever you treat as the reference). `--insecure` handles `.ddev.site` self-signed certs.
 
