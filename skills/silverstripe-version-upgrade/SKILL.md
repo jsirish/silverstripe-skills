@@ -1,11 +1,13 @@
 ---
 name: silverstripe-version-upgrade
-description: Complete workflow for upgrading Silverstripe CMS projects between major versions (e.g. SS4 → SS5). Covers assessment, dependency updates, config migration, data migration tasks, testing, and deployment.
+description: Complete workflow for upgrading Silverstripe CMS projects between major versions on the SS4+ line (e.g. SS4 → SS5, SS5 → SS6). Covers assessment, dependency updates, config migration, data migration tasks, testing, and deployment. For legacy SS3 → SS4 upgrades use the silverstripe-3-to-4-upgrade skill instead — that migration is structurally different.
 ---
 
 # Silverstripe Version Upgrade Skill
 
 Repeatable workflow for upgrading Silverstripe CMS projects (e.g. SS4 → SS5) in Dynamic Agency's module ecosystem and DDEV-based local development.
+
+> **Scope**: This skill covers **SS4 and later** major-version bumps (SS4 → SS5, SS5 → SS6) — a recurring, recipe- and dependency-driven upgrade. For a **legacy SS3 → SS4** upgrade, use the [silverstripe-3-to-4-upgrade](../silverstripe-3-to-4-upgrade/SKILL.md) skill instead: that is a one-time structural migration (PSR-4 namespacing, `mysite`→`app`, `public/` directory, DB schema preflight, Blocks→Elemental) with little mechanical overlap with this workflow.
 
 ## Upgrade Phases (Summary)
 
@@ -171,3 +173,9 @@ See [references/code-quality.md](references/code-quality.md) for PHPCS/PHPStan s
 | Data Migration Tasks | [data-migration-tasks.md](references/data-migration-tasks.md) |
 | SS5 Version Map | [version-map.md](references/version-map.md) |
 | Code Quality | [code-quality.md](references/code-quality.md) |
+
+## Related skills
+
+- [silverstripe-3-to-4-upgrade](../silverstripe-3-to-4-upgrade/SKILL.md) — the prior, structurally different leg. Use it for legacy SS3 → SS4 projects before this skill applies.
+- [ss5-data-migration](../ss5-data-migration/SKILL.md) / [ss6-data-migration](../ss6-data-migration/SKILL.md) — version-specific data-migration runbooks for the BuildTasks in Phase 5.
+- [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) — capture pixel diffs against the legacy instance to confirm parity (also linked inline in the Build & Verify phase).
