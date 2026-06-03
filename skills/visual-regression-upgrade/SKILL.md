@@ -73,8 +73,8 @@ Point `--prod` at the legacy local baseline and `--local` at the upgraded local 
 
 ```bash
 python scripts/capture.py \
-  --prod  https://{project}-legacy.ddev.site \   # source version (e.g. SS3) local baseline
-  --local https://{project}.ddev.site \           # target version (e.g. SS4) local upgrade
+  --prod       https://{project}-legacy.ddev.site \
+  --local      https://{project}.ddev.site \
   --paths-file paths.txt --wait 2.0 --insecure --out ./vr-legacy
 ```
 
