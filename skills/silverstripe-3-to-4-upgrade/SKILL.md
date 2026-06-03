@@ -12,6 +12,17 @@ description: >
 
 Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe 4. Based on the successful migration of Example Manufacturing, this guide details the exact steps, architectural shifts, and critical gotchas when moving to the SS4 framework.
 
+## Philosophy: parity, not redesign
+
+> [!IMPORTANT]
+> **An SS3→SS4 upgrade is a data + markup-parity exercise, not a redesign.** The goal is behavioural and visual parity with the SS3 site — achieved by migrating the data and **reproducing the existing markup** — not by improving or modernising the theme.
+>
+> - When a page looks wrong after the upgrade, the **default hypothesis is a missing wrapper element or a dropped legacy CSS class** — not a layout that needs re-authoring. The SS3 CSS almost always still works once the markup it targets is back.
+> - Reproduce the SS3 markup exactly; defer any genuine redesign to a separate, post-parity phase.
+> - This is the same "one rule" the [block-to-element-migration](../block-to-element-migration/SKILL.md) skill applies at the block-template level ("preserve the legacy HTML structure exactly") — it holds for the whole project, not just blocks.
+>
+> The overwhelming majority of visual-regression FAILs on a real migration traced to exactly this: a missing `<div>` or a dropped class, not layout that needed rebuilding. See [references/page-layout-parity.md](references/page-layout-parity.md) for the concrete page-layout parity fixes.
+
 ## Upgrade Phases (Summary)
 
 | Phase | Key Actions |
@@ -227,6 +238,9 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 - **Elemental Areas**: Replace `<% with $Blockarea(AreaName) %>` with `$ElementalArea` or specific area relations like `$ElementalHomePage`.
 
 > [!IMPORTANT]
+> **Page-layout parity is the biggest single source of VR FAILs** — bigger than block/element parity. Empty `block_area_*` wrapper divs that control margin-collapse, `WidgetHolder` structure, `SectionNavigationBlock` replacements, and `MenuTitle` vs `Title` nav text all need reproducing at the **layout-template** level. See [references/page-layout-parity.md](references/page-layout-parity.md) for each fix with the SS3 markup shown beside the SS4 equivalent.
+
+> [!IMPORTANT]
 > **Namespaced Base Templates**: SS4 resolves base templates by namespace path first. `Dynamic\Base\Page\HomePage` expects `themes/mytheme/templates/Dynamic/Base/Page/HomePage.ss` — NOT `templates/HomePage.ss`. Without this, the page falls back to `Page.ss`, potentially ruining full-width layout constraints.
 
 > [!NOTE]
@@ -268,6 +282,13 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 
 After the upgrade builds and renders, lock down code quality with automated tools and CI:
 
+> [!WARNING]
+> **Verify the shipped QA config actually runs before trusting the gate.** The installer-provided config is frequently stale on an upgrade and fails silently:
+> - `phpstan.neon` often does `includes: phpstan-baseline.neon`, but that baseline file **doesn't exist** — PHPStan won't run at all until you create it (`--generate-baseline`) or remove the include.
+> - `phpunit.xml.dist` often points at a vendor test dir that isn't installed (e.g. `vendor/<org>/<tools>/tests`), and there may be **no `app/tests/` directory** at all.
+>
+> Run each tool once and confirm it executes — "the config is present" is not the same as "the gate runs."
+
 1. **PHPCS** — enforce coding standards:
    ```bash
    ddev exec vendor/bin/phpcs app/src/
@@ -279,6 +300,13 @@ After the upgrade builds and renders, lock down code quality with automated tool
    ddev exec vendor/bin/phpstan analyse app/src/
    ```
    Run at level 1–2 initially; the SS4 upgrade introduces many dynamic calls that require baseline configuration. Use `--generate-baseline` to create a `phpstan-baseline.neon` for known false positives.
+
+   **Wire in the SilverStripe extension or you'll drown in false positives.** Plain PHPStan flags every SS magic method (`$page->StaffMembers()`, `$this->UtilityLinks()`, `getStaffMembers()`) as an error. `cambis/silverstan` (already in the dev-deps in [Phase 3](#phase-3-dependencies--branching)) teaches PHPStan about SS's dynamic ORM/`has_one`/`has_many` calls. With `phpstan/extension-installer` present it auto-registers; otherwise add it to `phpstan.neon`:
+   ```neon
+   includes:
+       - vendor/cambis/silverstan/extension.neon
+   ```
+   Then `--generate-baseline` to adopt the gate incrementally rather than fixing every legacy finding at once. Match the silverstan major to the target CMS major (`^1.0` for SS4, `^2.1` for SS5+).
 
 3. **Rector** — automated refactoring validation:
    ```bash
