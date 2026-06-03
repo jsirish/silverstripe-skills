@@ -167,8 +167,9 @@ Walk the [references/verification-checklist.md](references/verification-checklis
 
 ## Anti-patterns
 
-- **Don't add LegacyBlockID columns.** Use the ExtraClass `migrated-from-block` marker — no schema changes, re-runs delete and re-import cleanly.
-- **Don't skip `_Versions` writes.** Use `insertVersionedRow()` for every Element write. Skipping `_Versions` will appear to work until someone edits the element in the CMS, at which point `publish()` will silently strip it from `_Live`.
+- **Don't add LegacyBlockID columns.** Use the ExtraClass `migrated-from-block` marker — no schema changes. Re-runs stay clean only if cleanup also deletes child rows (PromoItems, gallery items) by their parent FK before re-import; otherwise they orphan or accumulate.
+- **Don't skip `_Versions` writes.** Use `insertVersionedRow()` for every Element write **and every child sub-object**. Skipping `_Versions` will appear to work until someone edits the element in the CMS, at which point `publish()` will silently strip it — or its children — from `_Live`.
+- **Don't INSERT child sub-objects with their original SS3 IDs.** IDs get reused across object types and re-runs; an explicit-ID INSERT silently collides and leaves join/FK references pointing at rows that don't exist, so the element renders empty even though the migration reports success. Let the DB auto-increment (use `insertVersionedRow()`), keep an old→new map when a join table is involved, and rewrite the join table with the new IDs. See [#19](https://github.com/jsirish/silverstripe-skills/issues/19) and the verification-checklist orphan query.
 - **Don't try to revive SS3 JS for height calculations.** If SS3 used JS to set fixed heights and CSS depended on it (e.g. `vert-centering` with `position: absolute`), the layout will collapse in SS4 — strip those classes from the element template rather than trying to port the JS.
 - **Don't rewrite the legacy theme CSS during migration.** Either keep the legacy block class on the element wrapper, or override `ElementHolder.ss` — defer the CSS rewrite until after migration is verified.
 - **Don't use the namespaced `<% include SilverStripe\Foo\Bar %>` form if the theme has an `Includes/Bar.ss` override.** The namespaced form bypasses theme cascading. Use un-namespaced `<% include Bar %>` to let the theme override apply.
