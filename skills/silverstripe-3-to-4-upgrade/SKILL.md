@@ -12,6 +12,8 @@ description: >
 
 Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe 4. Based on the successful migration of Example Manufacturing, this guide details the exact steps, architectural shifts, and critical gotchas when moving to the SS4 framework.
 
+> **Scope**: This skill is **SS3 → SS4 specific** — a one-time structural migration. Once a project is on SS4, use the [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md) skill for SS4 → SS5 and later major-version bumps.
+
 ## Philosophy: parity, not redesign
 
 > [!IMPORTANT]
@@ -460,3 +462,8 @@ After the upgrade builds and renders, lock down code quality with automated tool
 
 > [!NOTE]
 > **Template debugging**: in dev mode, append `?showtemplate=1` to any URL to see which template SS4 resolved for that page, and `?flush=1` to clear the template cache. Installing `lekoala/silverstripe-debugbar` (SS4) adds a toolbar showing the resolved controller, the template chain, and DB queries — invaluable when a namespaced class silently falls back to `Page.ss`.
+
+## Related skills
+
+- [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md) — **the next step**. Once the project is on SS4, use it for SS4 → SS5 and later major-version bumps (a recurring, recipe-driven upgrade, mechanically different from this one-time SS3 → SS4 migration).
+- [block-to-element-migration](../block-to-element-migration/SKILL.md) — the dedicated Blocks → Elemental workflow referenced throughout Phase 6 (discovery, migration-task skeleton, template duplication, area-suffix convention, verification).
