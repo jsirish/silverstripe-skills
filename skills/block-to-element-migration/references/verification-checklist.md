@@ -50,6 +50,28 @@ WHERE e.ExtraClass LIKE '%migrated-from-block%'
 ```
 
 ```sql
+-- Every child sub-object resolves to a real parent element, and has its own
+-- _Live + _Versions rows. A child that migrated but renders nothing usually
+-- means a missing _Live/_Versions row; an orphaned child means the parent FK
+-- (or a join-table reference) points at an ID that doesn't exist. See #19.
+SELECT pi.ID, pi.ElementPromoID
+FROM PromoItem pi
+LEFT JOIN PromoItem_Live pil       ON pil.ID = pi.ID
+LEFT JOIN PromoItem_Versions piv   ON piv.RecordID = pi.ID
+LEFT JOIN ElementPromo ep          ON ep.ID = pi.ElementPromoID
+WHERE pil.ID IS NULL          -- not published to _Live
+   OR piv.RecordID IS NULL    -- no _Versions row (publish() will strip it)
+   OR ep.ID IS NULL;          -- orphaned: parent element missing
+-- Should return zero rows. Repeat per child type (PageSection, gallery items, …).
+
+-- If your project uses the many-many base-table model instead (BaseElementObject
+-- joined via ElementPromos_Promos), the orphan check is on the join table:
+SELECT p.* FROM ElementPromos_Promos p
+LEFT JOIN BaseElementObject o ON o.ID = p.PromoObjectID
+WHERE o.ID IS NULL;  -- must return 0 rows (every join reference resolves)
+```
+
+```sql
 -- Every page that had blocks has an ElementalArea, and the area is on _Live too
 SELECT DISTINCT
     p.ID, p.Title, p.ElementalAreaID,
@@ -106,6 +128,7 @@ For each combination of (page type × element type × area variant), pick one re
 |---------|--------------|----------------|
 | Element exists in CMS but page renders nothing | `_Live` row missing OR `Page_Live.ElementalAreaID = 0` | `publishElementalAreasToLive()` + `syncPageAreasToLive()` |
 | Edit element → save → element disappears on frontend | `_Versions` row missing — publish strips from `_Live` | `insertVersionedRow()` writes |
+| Element renders but child items partly/fully missing (e.g. 1 of 3 promo icons) | Child sub-objects INSERTed with reused SS3 IDs → silent collision, or missing `_Live`/`_Versions` | Run the child orphan-check query above; use `insertVersionedRow()` (auto-increment) for children — see #19 |
 | Element renders default template instead of area variant | Template suffix doesn't match `has_one` key | Filename character-for-character vs YAML |
 | HTML structure right but CSS broken | Legacy block class not on outer wrapper | Hardcode class in element template |
 | Area variant template shown on wrong area | Page model has two areas sharing one `has_one` relation | Declare separate `has_one` for each visual area |
