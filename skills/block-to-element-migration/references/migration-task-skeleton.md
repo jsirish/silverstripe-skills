@@ -136,6 +136,9 @@ class BlockMigrationTask extends BuildTask
             . ' ' . $areaCols
             . ' FROM "SiteTree_Blocks" AS "stb"'
             . ' INNER JOIN "Block" AS "b" ON "b"."ID" = "stb"."BlockID"'
+            // Published-only: a row in "Block_Live" is the real live gate.
+            // Do NOT filter on "b"."Published" — see the "Don't" section.
+            . ' INNER JOIN "Block_Live" AS "bl" ON "bl"."ID" = "b"."ID"'
             . ' INNER JOIN "Page" AS "p" ON "p"."ID" = "stb"."SiteTreeID"'
             // Add LEFT JOINs here for any subclass tables referenced in AREA_MAP
             . ' ORDER BY "stb"."SiteTreeID", "stb"."BlockArea", "stb"."Sort" ASC'
@@ -532,3 +535,4 @@ See [../examples/BlockMigrationTask.example.php](../examples/BlockMigrationTask.
 - **Don't skip `_Versions` writes** even when the subtype table looks like it doesn't need them. The Versioned module assumes they exist; a missing `_Versions` row can cause `publish()` to silently strip the element from `_Live`.
 - **Don't run this task before declaring page-model `has_one` relations.** Phase 2 is required first — `dev/build` needs to have created the area columns.
 - **Don't run on prod without dry-run first.** Always preview by-type and by-area before writing.
+- **Don't trust `Block.Published`.** That column is a versioning artifact and is effectively always `0` — filtering on it migrates nothing (or everything, if you invert it). The real "is this block live?" gate is the **existence of a row in `Block_Live`**, which is why `discoverBlocks()` joins it. Migrate draft-only blocks and you resurrect content that was never live on prod (on one migration a draft-only `ContentBlock` rendered on the donate page as a 7.88% visual-regression FAIL — switching to the `Block_Live` join took it to PASS at 0.16%).

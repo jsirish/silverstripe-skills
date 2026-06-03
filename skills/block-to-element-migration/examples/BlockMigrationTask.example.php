@@ -104,6 +104,9 @@ class BlockMigrationTask extends BuildTask
             . ' ' . $areaCols
             . ' FROM "SiteTree_Blocks" AS "stb"'
             . ' INNER JOIN "Block" AS "b" ON "b"."ID" = "stb"."BlockID"'
+            // Published-only: join "Block_Live" rather than filtering "b"."Published"
+            // (that column is always 0 — a versioning artifact, not a live flag).
+            . ' INNER JOIN "Block_Live" AS "bl" ON "bl"."ID" = "b"."ID"'
             . ' INNER JOIN "Page" AS "p" ON "p"."ID" = "stb"."SiteTreeID"'
             . ' ORDER BY "stb"."SiteTreeID", "stb"."BlockArea", "stb"."Sort" ASC'
         );
