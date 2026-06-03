@@ -239,12 +239,14 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
    ```
 
 > [!CAUTION]
-> **`MigrateContentToElement` — only run if your SS4 theme does NOT render `$Content` natively.**
+> **`MigrateContentToElement` — only run for an intentional Elemental-only architecture, after backup.**
 > This vendor task (`dev/tasks/DNADesign-Elemental-Tasks-MigrateContentToElement`) moves
-> `SiteTree.Content` into an `ElementContent` block and then **blanks `Content`**. If `Page.ss` /
-> `BlogPost.ss` / your page templates output `$Content` directly — the Dynamic base-site default —
-> do **NOT** run it. It empties those fields and breaks blog listing excerpts (`$Summary`/`$Excerpt`
-> derive from `Content`), content alignment, and anything else reading `$Content`, for no benefit.
+> `SiteTree.Content` into an `ElementContent` block and then **blanks `Content`**. Do **NOT** run it
+> unless you have a verified database backup/export and have confirmed that templates, search
+> indexes, summaries/excerpts, feeds, and any custom code no longer read `SiteTree.Content`. If
+> `Page.ss` / `BlogPost.ss` / your page templates output `$Content` directly — the Dynamic base-site
+> default — it empties those fields and breaks blog listing excerpts (`$Summary`/`$Excerpt` derive
+> from `Content`), content alignment, and anything else reading `$Content`, for no benefit.
 >
 > Decide with the minimal-transformation test from [Philosophy](#philosophy-parity-not-redesign):
 > `SiteTree.Content` exists natively in both SS3 and SS4, so it must not be transformed. Only migrate
