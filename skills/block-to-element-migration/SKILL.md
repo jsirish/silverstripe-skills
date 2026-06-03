@@ -186,3 +186,4 @@ Walk the [references/verification-checklist.md](references/verification-checklis
 - [references/verification-checklist.md](references/verification-checklist.md) — pre-merge visual parity checks
 - [examples/](examples/) — worked example task, YAML config, and template diff
 - Sibling skill: [silverstripe-3-to-4-upgrade](../silverstripe-3-to-4-upgrade/SKILL.md) — the broader upgrade workflow
+- [silverstripe-3-to-4-upgrade/references/page-layout-parity.md](../silverstripe-3-to-4-upgrade/references/page-layout-parity.md) — page-level markup parity (margin-collapse wrappers, WidgetHolder, SectionNav, MenuTitle) — the same "preserve the markup exactly" rule applied at the layout-template level
