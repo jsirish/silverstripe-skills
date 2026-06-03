@@ -15,13 +15,13 @@ Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe
 ## Philosophy: parity, not redesign
 
 > [!IMPORTANT]
-> **An SS3→SS4 upgrade is a data + markup-parity exercise, not a redesign.** The goal is behavioural and visual parity with the SS3 site — achieved by migrating the data and **reproducing the existing markup** — not by improving or modernising the theme.
+> **Parity, not redesign — and minimal transformation.** An SS3→SS4 upgrade is a data + markup-parity exercise. The goal is behavioural and visual parity with the SS3 site — achieved by migrating data and **reproducing the existing markup** — not by improving or modernising anything.
 >
-> - When a page looks wrong after the upgrade, the **default hypothesis is a missing wrapper element or a dropped legacy CSS class** — not a layout that needs re-authoring. The SS3 CSS almost always still works once the markup it targets is back.
-> - Reproduce the SS3 markup exactly; defer any genuine redesign to a separate, post-parity phase.
-> - This is the same "one rule" the [block-to-element-migration](../block-to-element-migration/SKILL.md) skill applies at the block-template level ("preserve the legacy HTML structure exactly") — it holds for the whole project, not just blocks.
+> Apply one test before any action: **"does this already exist natively in SS4?"** If a field, class, or data shape already exists in the target version, it must not be transformed. Only run a migration task for data that a **removed or renamed class** genuinely requires.
 >
-> The overwhelming majority of visual-regression FAILs on a real migration traced to exactly this: a missing `<div>` or a dropped class, not layout that needed rebuilding. See [references/page-layout-parity.md](references/page-layout-parity.md) for the concrete page-layout parity fixes.
+> - **Markup side:** When a page looks wrong after the upgrade, the default hypothesis is a missing wrapper element or a dropped legacy CSS class — not a layout that needs re-authoring. The SS3 CSS almost always still works once the markup it targets is back. See [references/page-layout-parity.md](references/page-layout-parity.md).
+> - **Data side:** When a migration task transforms content that was already native in SS4, it breaks things for zero benefit. Example: `MigrateContentToElement` moves `SiteTree.Content` into Elemental and blanks the field — but SS4 still has `$Content` natively and the theme renders it directly. Running the task silently broke blog excerpts and page layout while adding no value. See [issue #18](https://github.com/jsirish/silverstripe-skills/issues/18).
+> - Defer any genuine redesign to a separate, post-parity phase. This is the same "one rule" the [block-to-element-migration](../block-to-element-migration/SKILL.md) skill applies at the block-template level — it holds for the whole project.
 
 ## Upgrade Phases (Summary)
 
@@ -161,23 +161,42 @@ SS4 heavily relies on PHP namespaces.
      "psr-4": { "App\\": "app/src/" }
    }
    ```
-3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. This runs during `dev/build` and rewrites all `ClassName` columns across every table (including `_Live` and `_Versions`). Without it, SS4 can't resolve the stored class names and pages fall back to `Page.ss` (or render blank). This is **separate from** any Injector/config class aliasing — both may be needed. The remapping is **idempotent** and safe to leave in place during the migration window; remove it once all migrated data is confirmed working. Add to `app/_config/app.yml`:
+3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. This runs during `dev/build` and rewrites all `ClassName` columns across **every** DataObject table (including `_Live` and `_Versions`) — not just SiteTree. Without it, SS4 can't resolve the stored class names and pages fall back to `Page.ss` (or render blank). This is **separate from** any Injector/config class aliasing — both may be needed. The remapping is **idempotent** and safe to leave in place during the migration window; remove it once all migrated data is confirmed working. Add to `app/_config/app.yml`:
    ```yaml
    SilverStripe\ORM\DatabaseAdmin:
      classname_value_remapping:
+       # Page types
        Page: 'App\Pages\Page'
        HomePage: 'App\Pages\HomePage'
-       # ... all other page types and custom DataObjects
        Blog: 'SilverStripe\Blog\Model\Blog'
        BlogPost: 'SilverStripe\Blog\Model\BlogPost'
-       # Orphaned SS3 vendor pages with no SS4 equivalent — map to generic App\Pages\Page:
+       # Orphaned SS3 vendor pages with no SS4 equivalent — map to nearest base:
        EventHolder: 'App\Pages\Page'
        EventPage: 'App\Pages\Page'
+       # UserForms field classes — include ALL editable field types the DB contains:
+       EditableEmailField: 'SilverStripe\UserForms\Model\EditableFormField\EditableEmailField'
+       EditableTextField: 'SilverStripe\UserForms\Model\EditableFormField\EditableTextField'
+       EditableDropdown: 'SilverStripe\UserForms\Model\EditableFormField\EditableDropdown'
+       EditableCheckbox: 'SilverStripe\UserForms\Model\EditableFormField\EditableCheckbox'
+       EditableFormStep: 'SilverStripe\UserForms\Model\EditableFormField\EditableFormStep'
+       EditableFormHeading: 'SilverStripe\UserForms\Model\EditableFormField\EditableFormHeading'
+       EditableLiteralField: 'SilverStripe\UserForms\Model\EditableFormField\EditableLiteralField'
+       EditableSpamProtectionField: 'SilverStripe\SpamProtection\EditableSpamProtectionField'
+       # Custom DataObjects with renamed/namespaced classes:
+       PromoObject: 'Dynamic\Elements\Promos\Model\PromoObject'
    ```
-   Query the DB first to discover every `ClassName` value that needs remapping:
+   Query the DB first to enumerate every value that needs remapping:
    ```bash
+   # Page types
    ddev exec "mysql -udb -pdb db -e \"SELECT DISTINCT ClassName, COUNT(*) FROM SiteTree GROUP BY ClassName;\""
+   # UserForms fields (if silverstripe/userforms is installed)
+   ddev exec "mysql -udb -pdb db -e \"SELECT DISTINCT ClassName, COUNT(*) FROM EditableFormField GROUP BY ClassName;\""
    ```
+
+   > [!CAUTION]
+   > **Don't write custom SQL tasks to fix `ClassName` values.** A common SS3→SS4 smell is a hand-rolled `BuildTask` doing `UPDATE ... SET ClassName = '...'`. That's exactly what `classname_value_remapping` is for — it's idempotent, runs during `dev/build`, and covers base + `_Live` + `_Versions` automatically. Custom SQL is redundant and error-prone.
+   >
+   > **One exception:** `classname_value_remapping` only touches the `ClassName` column, **not** `ParentClass` or other string fields that store class names. A task like `FormParentClassMigrationTask` that fixes `EditableFormField.ParentClass` is still legitimate — but trim it to only fix `ParentClass`, not `ClassName` (which the config now handles).
 4. **SSViewer themes config** — include `$public` and `$default` so vendor module templates resolve:
    ```yaml
    SilverStripe\View\SSViewer:
