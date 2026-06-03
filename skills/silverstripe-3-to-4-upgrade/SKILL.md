@@ -12,6 +12,17 @@ description: >
 
 Repeatable workflow for upgrading legacy Silverstripe 3 projects to Silverstripe 4. Based on the successful migration of Example Manufacturing, this guide details the exact steps, architectural shifts, and critical gotchas when moving to the SS4 framework.
 
+## Philosophy: parity, not redesign
+
+> [!IMPORTANT]
+> **Parity, not redesign — and minimal transformation.** An SS3→SS4 upgrade is a data + markup-parity exercise. The goal is behavioural and visual parity with the SS3 site — achieved by migrating data and **reproducing the existing markup** — not by improving or modernising anything.
+>
+> Apply one test before any action: **"does this already exist natively in SS4?"** If a field, class, or data shape already exists in the target version, it must not be transformed. Only run a migration task for data that a **removed or renamed class** genuinely requires.
+>
+> - **Markup side:** When a page looks wrong after the upgrade, the default hypothesis is a missing wrapper element or a dropped legacy CSS class — not a layout that needs re-authoring. The SS3 CSS almost always still works once the markup it targets is back. See [references/page-layout-parity.md](references/page-layout-parity.md).
+> - **Data side:** When a migration task transforms content that was already native in SS4, it breaks things for zero benefit. Example: `MigrateContentToElement` moves `SiteTree.Content` into Elemental and blanks the field — but SS4 still has `$Content` natively and the theme renders it directly. Running the task silently broke blog excerpts and page layout while adding no value. See [issue #18](https://github.com/jsirish/silverstripe-skills/issues/18).
+> - Defer any genuine redesign to a separate, post-parity phase. This is the same "one rule" the [block-to-element-migration](../block-to-element-migration/SKILL.md) skill applies at the block-template level — it holds for the whole project.
+
 ## Upgrade Phases (Summary)
 
 | Phase | Key Actions |
@@ -150,23 +161,42 @@ SS4 heavily relies on PHP namespaces.
      "psr-4": { "App\\": "app/src/" }
    }
    ```
-3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. This runs during `dev/build` and rewrites all `ClassName` columns across every table (including `_Live` and `_Versions`). Without it, SS4 can't resolve the stored class names and pages fall back to `Page.ss` (or render blank). This is **separate from** any Injector/config class aliasing — both may be needed. The remapping is **idempotent** and safe to leave in place during the migration window; remove it once all migrated data is confirmed working. Add to `app/_config/app.yml`:
+3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. This runs during `dev/build` and rewrites all `ClassName` columns across **every** DataObject table (including `_Live` and `_Versions`) — not just SiteTree. Without it, SS4 can't resolve the stored class names and pages fall back to `Page.ss` (or render blank). This is **separate from** any Injector/config class aliasing — both may be needed. The remapping is **idempotent** and safe to leave in place during the migration window; remove it once all migrated data is confirmed working. Add to `app/_config/app.yml`:
    ```yaml
    SilverStripe\ORM\DatabaseAdmin:
      classname_value_remapping:
+       # Page types
        Page: 'App\Pages\Page'
        HomePage: 'App\Pages\HomePage'
-       # ... all other page types and custom DataObjects
        Blog: 'SilverStripe\Blog\Model\Blog'
        BlogPost: 'SilverStripe\Blog\Model\BlogPost'
-       # Orphaned SS3 vendor pages with no SS4 equivalent — map to generic App\Pages\Page:
+       # Orphaned SS3 vendor pages with no SS4 equivalent — map to nearest base:
        EventHolder: 'App\Pages\Page'
        EventPage: 'App\Pages\Page'
+       # UserForms field classes — include ALL editable field types the DB contains:
+       EditableEmailField: 'SilverStripe\UserForms\Model\EditableFormField\EditableEmailField'
+       EditableTextField: 'SilverStripe\UserForms\Model\EditableFormField\EditableTextField'
+       EditableDropdown: 'SilverStripe\UserForms\Model\EditableFormField\EditableDropdown'
+       EditableCheckbox: 'SilverStripe\UserForms\Model\EditableFormField\EditableCheckbox'
+       EditableFormStep: 'SilverStripe\UserForms\Model\EditableFormField\EditableFormStep'
+       EditableFormHeading: 'SilverStripe\UserForms\Model\EditableFormField\EditableFormHeading'
+       EditableLiteralField: 'SilverStripe\UserForms\Model\EditableFormField\EditableLiteralField'
+       EditableSpamProtectionField: 'SilverStripe\SpamProtection\EditableSpamProtectionField'
+       # Custom DataObjects with renamed/namespaced classes:
+       PromoObject: 'Dynamic\Elements\Promos\Model\PromoObject'
    ```
-   Query the DB first to discover every `ClassName` value that needs remapping:
+   Query the DB first to enumerate every value that needs remapping:
    ```bash
+   # Page types
    ddev exec "mysql -udb -pdb db -e \"SELECT DISTINCT ClassName, COUNT(*) FROM SiteTree GROUP BY ClassName;\""
+   # UserForms fields (if silverstripe/userforms is installed)
+   ddev exec "mysql -udb -pdb db -e \"SELECT DISTINCT ClassName, COUNT(*) FROM EditableFormField GROUP BY ClassName;\""
    ```
+
+   > [!CAUTION]
+   > **Don't write custom SQL tasks to fix `ClassName` values.** A common SS3→SS4 smell is a hand-rolled `BuildTask` doing `UPDATE ... SET ClassName = '...'`. That's exactly what `classname_value_remapping` is for — it's idempotent, runs during `dev/build`, and covers base + `_Live` + `_Versions` automatically. Custom SQL is redundant and error-prone.
+   >
+   > **One exception:** `classname_value_remapping` only touches the `ClassName` column, **not** `ParentClass` or other string fields that store class names. A task like `FormParentClassMigrationTask` that fixes `EditableFormField.ParentClass` is still legitimate — but trim it to only fix `ParentClass`, not `ClassName` (which the config now handles).
 4. **SSViewer themes config** — include `$public` and `$default` so vendor module templates resolve:
    ```yaml
    SilverStripe\View\SSViewer:
@@ -227,6 +257,9 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 - **Elemental Areas**: Replace `<% with $Blockarea(AreaName) %>` with `$ElementalArea` or specific area relations like `$ElementalHomePage`.
 
 > [!IMPORTANT]
+> **Page-layout parity is the biggest single source of VR FAILs** — bigger than block/element parity. Empty `block_area_*` wrapper divs that control margin-collapse, `WidgetHolder` structure, `SectionNavigationBlock` replacements, and `MenuTitle` vs `Title` nav text all need reproducing at the **layout-template** level. See [references/page-layout-parity.md](references/page-layout-parity.md) for each fix with the SS3 markup shown beside the SS4 equivalent.
+
+> [!IMPORTANT]
 > **Namespaced Base Templates**: SS4 resolves base templates by namespace path first. `Dynamic\Base\Page\HomePage` expects `themes/mytheme/templates/Dynamic/Base/Page/HomePage.ss` — NOT `templates/HomePage.ss`. Without this, the page falls back to `Page.ss`, potentially ruining full-width layout constraints.
 
 > [!NOTE]
@@ -268,9 +301,16 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 
 After the upgrade builds and renders, lock down code quality with automated tools and CI:
 
+> [!WARNING]
+> **Verify the shipped QA config actually runs before trusting the gate.** The installer-provided config is frequently stale on an upgrade and fails silently:
+> - `phpstan.neon` often does `includes: phpstan-baseline.neon`, but that baseline file **doesn't exist** — PHPStan won't run at all until you create it (`--generate-baseline`) or remove the include.
+> - `phpunit.xml.dist` often points at a vendor test dir that isn't installed (e.g. `vendor/<org>/<tools>/tests`), and there may be **no `app/tests/` directory** at all.
+>
+> Run each tool once and confirm it executes — "the config is present" is not the same as "the gate runs."
+
 1. **PHPCS** — enforce coding standards:
    ```bash
-   ddev exec vendor/bin/phpcs app/src/
+   ddev exec vendor/bin/phpcs app/src/ app/tests/
    ```
    Common SS3→SS4 issues PHPCS catches: missing namespace declarations, outdated class references, PSR-2/PSR-12 formatting.
 
@@ -279,6 +319,17 @@ After the upgrade builds and renders, lock down code quality with automated tool
    ddev exec vendor/bin/phpstan analyse app/src/
    ```
    Run at level 1–2 initially; the SS4 upgrade introduces many dynamic calls that require baseline configuration. Use `--generate-baseline` to create a `phpstan-baseline.neon` for known false positives.
+
+   **Wire in the SilverStripe extension or you'll drown in false positives.** Plain PHPStan flags every SS magic method (`$page->StaffMembers()`, `$this->UtilityLinks()`, `getStaffMembers()`) as an error. `cambis/silverstan` teaches PHPStan about SS's dynamic ORM/`has_one`/`has_many` calls — install it if not already in your dev-deps (it's included in the [Phase 3](#phase-3-dependencies--branching) standard toolkit):
+   ```bash
+   composer require --dev cambis/silverstan
+   ```
+   With `phpstan/extension-installer` present it auto-registers; otherwise add it to `phpstan.neon`:
+   ```neon
+   includes:
+       - vendor/cambis/silverstan/extension.neon
+   ```
+   Then `--generate-baseline` to adopt the gate incrementally rather than fixing every legacy finding at once. Match the silverstan major to the target CMS major (`^1.0` for SS4, `^2.1` for SS5+).
 
 3. **Rector** — automated refactoring validation:
    ```bash
@@ -291,6 +342,9 @@ After the upgrade builds and renders, lock down code quality with automated tool
    ddev exec vendor/bin/phpunit
    ```
    If no tests exist yet, this is the ideal time to add smoke tests for the upgraded page types and Elemental elements.
+
+   > [!NOTE]
+   > The PHPCS, PHPStan, and PHPUnit commands above are consistent with the shared code-quality reference in [silverstripe-version-upgrade/references/code-quality.md](../silverstripe-version-upgrade/references/code-quality.md), which also covers GitHub Actions CI setup and common fixes.
 
 5. **Rector in CI** — add a `rector` job to `.github/workflows/ci.yml`:
    ```yaml
