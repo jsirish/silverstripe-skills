@@ -348,21 +348,18 @@ class BlockMigrationTask extends BuildTask
                 $parts = array_filter([$child['GPST_Seg'] ?: null, $child['PST_Seg'] ?: null, $child['ST_Seg']]);
                 $url = '/' . implode('/', $parts) . '/';
             }
-            DB::prepared_query(
-                'INSERT INTO "PageSection"'
-                . ' ("Title","SubTitle","Content","BlockLinkURL","BlockLinkText","Sort","ImageID","ElementPageSectionID")'
-                . ' VALUES (?,?,?,?,?,?,?,?)',
-                [
-                    $child['Title'] ?? '',
-                    $child['SubTitle'] ?? '',
-                    $child['Content'] ?? '',
-                    $url,
-                    $child['BL_Title'] ?? '',
-                    (int) ($child['SortOrder'] ?? 0),
-                    (int) ($child['ImageID'] ?? 0),
-                    $elementId,
-                ]
-            );
+            // Auto-increment the ID (never reuse the SS3 PageSectionObject ID)
+            // and write base + _Live + _Versions so the child survives publish().
+            $this->insertVersionedRow('PageSection', [
+                'Title'                 => $child['Title'] ?? '',
+                'SubTitle'              => $child['SubTitle'] ?? '',
+                'Content'               => $child['Content'] ?? '',
+                'BlockLinkURL'          => $url,
+                'BlockLinkText'         => $child['BL_Title'] ?? '',
+                'Sort'                  => (int) ($child['SortOrder'] ?? 0),
+                'ImageID'               => (int) ($child['ImageID'] ?? 0),
+                'ElementPageSectionID'  => $elementId,
+            ]);
         }
     }
 
@@ -393,20 +390,17 @@ class BlockMigrationTask extends BuildTask
             if (!$url && ($item['ST_Seg'] ?? '')) {
                 $url = '/' . $item['ST_Seg'] . '/';
             }
-            DB::prepared_query(
-                'INSERT INTO "PromoItem"'
-                . ' ("Title","Content","BlockLinkURL","BlockLinkText","Sort","ImageID","ElementPromoID")'
-                . ' VALUES (?,?,?,?,?,?,?)',
-                [
-                    $item['Title'] ?? '',
-                    $item['Content'] ?? '',
-                    $url,
-                    $item['BL_Title'] ?? '',
-                    (int) ($item['PBP_Sort'] ?? 0),
-                    (int) ($item['ImageID'] ?? 0),
-                    $elementId,
-                ]
-            );
+            // Auto-increment the ID (never reuse the SS3 PromoObject ID) and
+            // write base + _Live + _Versions so the child survives publish().
+            $this->insertVersionedRow('PromoItem', [
+                'Title'          => $item['Title'] ?? '',
+                'Content'        => $item['Content'] ?? '',
+                'BlockLinkURL'   => $url,
+                'BlockLinkText'  => $item['BL_Title'] ?? '',
+                'Sort'           => (int) ($item['PBP_Sort'] ?? 0),
+                'ImageID'        => (int) ($item['ImageID'] ?? 0),
+                'ElementPromoID' => $elementId,
+            ]);
         }
     }
 

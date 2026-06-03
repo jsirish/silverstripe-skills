@@ -511,28 +511,54 @@ private function migratePromoItems(int $elementId, int $blockId): void
     );
 
     foreach ($items as $item) {
-        DB::prepared_query(
-            'INSERT INTO "PromoItem"'
-            . ' ("Title","Content","Sort","ImageID","ElementPromoID")'
-            . ' VALUES (?,?,?,?,?)',
-            [
-                $item['Title'] ?? '',
-                $item['Content'] ?? '',
-                (int) ($item['PBP_Sort'] ?? 0),
-                (int) ($item['ImageID'] ?? 0),
-                $elementId,
-            ]
-        );
+        // Let the DB assign the ID — never reuse the SS3 PromoObject ID
+        // (see "Don't" below). insertVersionedRow() writes base + _Live +
+        // _Versions, so the child survives the next publish(). The child
+        // points up to its parent via ElementPromoID, so there is no join
+        // table to remap here.
+        $this->insertVersionedRow('PromoItem', [
+            'Title'          => $item['Title'] ?? '',
+            'Content'        => $item['Content'] ?? '',
+            'Sort'           => (int) ($item['PBP_Sort'] ?? 0),
+            'ImageID'        => (int) ($item['ImageID'] ?? 0),
+            'ElementPromoID' => $elementId,
+        ]);
     }
 }
 ```
+
+> [!CAUTION]
+> **Many-many child model (old→new ID map).** The skeleton above uses a
+> `has_one`/`has_many` child (`PromoItem.ElementPromoID` points up at the
+> parent), so no remap is needed. If your child objects instead live in a
+> shared base table joined by a many-many table (e.g. SS3 `PromoObject` →
+> SS4 `BaseElementObject`, joined via `ElementPromos_Promos`), do **not**
+> INSERT them with their original SS3 IDs. Use auto-increment, capture each
+> `last insert id`, build an **old→new ID map**, and rewrite the join table
+> with the *new* IDs:
+>
+> ```php
+> $idMap = [];
+> foreach ($items as $item) {
+>     $newId = $this->insertVersionedRow('BaseElementObject', [/* ...fields, no ID... */]);
+>     $idMap[(int) $item['ID']] = $newId; // old SS3 ID → new auto-increment ID
+> }
+> // Rewrite the join table using the new IDs (not the old SS3 ones):
+> foreach ($idMap as $oldId => $newId) {
+>     DB::prepared_query(
+>         'UPDATE "ElementPromos_Promos" SET "PromoObjectID" = ? WHERE "PromoObjectID" = ? AND "ElementPromoID" = ?',
+>         [$newId, $oldId, $elementId]
+>     );
+> }
+> ```
 
 See [../examples/BlockMigrationTask.example.php](../examples/BlockMigrationTask.example.php) for a complete worked task with 5 block types.
 
 ## Don't
 
-- **Don't add `LegacyBlockID` columns** to subtype tables for "did this already migrate" lookups. The ExtraClass marker handles idempotency without schema changes, and re-runs stay clean.
-- **Don't skip `_Versions` writes** even when the subtype table looks like it doesn't need them. The Versioned module assumes they exist; a missing `_Versions` row can cause `publish()` to silently strip the element from `_Live`.
+- **Don't add `LegacyBlockID` columns** to subtype tables for "did this already migrate" lookups. The ExtraClass marker handles idempotency without schema changes. Re-runs stay clean **only if your cleanup also deletes the child rows** (PromoItems, gallery items, slides) — delete children by their parent FK before re-importing, or they accumulate / orphan on every run.
+- **Don't INSERT sub-objects (PromoItems, gallery items, slides) with their original SS3 IDs.** IDs are reused across object types and across re-runs; an explicit-ID INSERT silently collides, leaving join tables pointing at non-existent rows — the migration *looks* done but the element renders empty (on one migration this dropped an About-Us page from 3 promo icons to 1, and a Who-We-Serve page from 4 to 0). Let the DB assign the ID, keep an old→new map when a join table is involved, rewrite the join table with the new IDs, and write base + `_Live` + `_Versions` for each child (use `insertVersionedRow()`). See #19.
+- **Don't skip `_Versions` writes** even when the subtype table looks like it doesn't need them. The Versioned module assumes they exist; a missing `_Versions` row can cause `publish()` to silently strip the element — or a migrated child object — from `_Live`. This is a sibling of the draft-only-block discovery bug (#7): both look migrated but aren't live.
 - **Don't run this task before declaring page-model `has_one` relations.** Phase 2 is required first — `dev/build` needs to have created the area columns.
 - **Don't run on prod without dry-run first.** Always preview by-type and by-area before writing.
 - **Don't trust `Block.Published`.** That column is a versioning artifact and is effectively always `0` — filtering on it migrates nothing (or everything, if you invert it). The real "is this block live?" gate is the **existence of a row in `Block_Live`**, which is why `discoverBlocks()` joins it. Migrate draft-only blocks and you resurrect content that was never live on prod (on one migration a draft-only `ContentBlock` rendered on the donate page as a 7.88% visual-regression FAIL — switching to the `Block_Live` join took it to PASS at 0.16%).
