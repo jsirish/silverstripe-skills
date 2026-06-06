@@ -18,13 +18,22 @@ In DDEV architectures, rather than executing builds or variant generations on a 
 
 ## Prerequisites / Safety
 
-Both scripts invoke `ssh`, `rsync`, `mysqldump`, `mysql`, and `gzip`. Execute them from **inside the DDEV container** where SSH credentials are authenticated.
+Both scripts need authenticated SSH to reach the remote, so run `ddev auth ssh` first.
+
+> [!IMPORTANT]
+> **The two scripts run in opposite contexts — this trips people up.**
+> - **`sync.sh` runs INSIDE the container** (`ddev exec ./sync.sh`). It connects `mysql`/`mysqldump` to the ddev `db` service host and imports into the container DB, so it must run where that hostname resolves. It validates `ssh rsync mysqldump mysql gzip gunzip` — note **no `ddev`**.
+> - **`deploy.sh` runs on the HOST** (`bash deploy.sh`). It shells out to `ddev exec` *itself* (to dump the local DB) and validates that **`ddev` is in PATH**. Running it via `ddev exec ./deploy.sh` fails immediately — there is no `ddev` binary inside the container.
+
 ```bash
 # Authorize SSH Agent First
 ddev auth ssh
-# Execute from inside the container
+
+# Pull prod → local: runs INSIDE the container
 ddev exec ./sync.sh
-ddev exec ./deploy.sh
+
+# Push local → pre-prod: runs on the HOST (it calls ddev exec internally)
+bash deploy.sh
 ```
 
 ## Environment Configuration (`.env`)
