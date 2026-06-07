@@ -135,3 +135,33 @@ data is still unmigrated.
 | Sync script not found | Verify `sync.sh` exists in project root |
 | Assets appear broken after sync | Run `ddev composer vendor-expose` and check file permissions |
 | Changes not appearing after sync | Append `?flush=all` to URL, or run `ddev exec ./devbuild.sh flush=1` if `devbuild.sh` exists (otherwise `ddev sake dev/build "flush=1"`) |
+| `Mutagen sync completed with problems … unable to relocate staged file: file exists` | Mutagen is trying to sync user-uploaded assets. Set `upload_dirs` so the assets dir is bind-mounted instead — see [Mutagen `upload_dirs` conflicts](#mutagen-upload_dirs-conflicts-after-prod-sync) below. |
+
+## Mutagen `upload_dirs` conflicts after prod sync
+
+On Mutagen-enabled DDEV projects, the **first prod asset sync after a fresh start** frequently fails with:
+
+```
+Mutagen sync completed with problems
+  <file>: unable to create file: unable to relocate staged file: file exists
+```
+
+The conflicting files are user-uploaded assets (e.g. `assets/SecureUploads/<file>.docx`, resampled image
+variants under `_resampled/`). The site won't serve until it's resolved, and it recurs on **every** prod
+sync — a standing trap during the sync → migrate → VR loop.
+
+**Fix:** set `upload_dirs` in `.ddev/config.yaml` so Mutagen **bind-mounts** the assets dir instead of
+syncing it through Mutagen:
+
+```yaml
+upload_dirs:
+  - assets
+  # add ../node_modules too if it's a large sibling dir that doesn't need Mutagen sync
+```
+
+Then:
+
+```bash
+ddev mutagen reset && ddev restart
+ddev mutagen st <project>   # confirm it shows: ok: watching
+```
