@@ -87,6 +87,12 @@ ddev auth ssh
 ddev exec ./sync.sh  # sync prod DB and assets
 ```
 
+> [!NOTE]
+> The `-legacy` instance hits the same Mutagen `upload_dirs` conflict as the upgrade instance on its
+> first prod sync (`Mutagen sync completed with problems … unable to relocate staged file: file exists`).
+> Set `upload_dirs: [assets]` in **both** projects' `.ddev/config.yaml`, then `ddev mutagen reset && ddev restart`.
+> See the [ddev-sync skill](../ddev-sync/SKILL.md#mutagen-upload_dirs-conflicts-after-prod-sync) for details.
+
 This gives you `https://{project}-legacy.ddev.site` — a running SS3 instance against the same data you're upgrading. Use it to:
 - Confirm what each URL renders on SS3 before starting SS4 work
 - Run VR captures against `{project}-legacy.ddev.site` instead of the live prod URL (eliminates content drift between your DB snapshot and live prod)
