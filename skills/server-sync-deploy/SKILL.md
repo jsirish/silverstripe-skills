@@ -91,7 +91,16 @@ Both scripts accept identical command-line flags to isolate deployments or test 
 
 ## DeployHQ / Ploi caveats
 
-`sync.sh` / `deploy.sh` move data; the actual code deploy is usually handled by **DeployHQ** (build + SSH) onto a **Ploi**-managed server. Five behaviours of that stack each caused a production-style failure and aren't obvious from the scripts above.
+`sync.sh` / `deploy.sh` move data; the actual code deploy is usually handled by **DeployHQ** (build + SSH) onto a **Ploi**-managed server. Six behaviours of that stack each caused a production-style failure and aren't obvious from the scripts above.
+
+> [!CAUTION]
+> **DeployHQ deploys from the git remote, not your working copy — check for unpushed commits first.**
+> If your deploy branch has local commits you haven't pushed, `dhq deploy` silently ships the older
+> remote revision. Run a preflight before every deploy:
+> ```bash
+> git log origin/<branch>..<branch> --oneline   # must be empty before dhq deploy
+> ```
+> (Field evidence: master had 2 unpushed commits at deploy time on Safe Harbor — caught only by this check.)
 
 > [!CAUTION]
 > **`composer install` skips packages whose constraint is already satisfied.** On a server with an existing `vendor/`, `composer install` will **not** re-fetch a package just because the locked content changed — leaving stale or mismatched code that passes locally but breaks the deploy. For a clean parity deploy, wipe first:
@@ -123,3 +132,21 @@ Both scripts accept identical command-line flags to isolate deployments or test 
 > ssh ${REMOTE_USER}@${REMOTE_HOST} "rm -f ${REMOTE_DUMP_PATH}"
 > ```
 > Audit your local `sync.sh` to confirm cleanup is not gated on dry-run mode.
+
+## ddev lifecycle gotchas
+
+Two ddev container-lifecycle behaviours bite the sync/deploy loop after a restart or power cycle.
+
+> [!WARNING]
+> **`ddev poweroff` clears the ssh-agent.** After `ddev poweroff` (or a full restart) the
+> ddev-ssh-agent container is removed, so the next `sync.sh` — which needs SSH keys to reach prod —
+> fails. Re-run `ddev auth ssh` before syncing. `deploy.sh` uses host SSH, so it's unaffected.
+
+> [!WARNING]
+> **OrbStack port forwarding goes stale after `ddev mutagen reset` + `ddev restart`.** The
+> `.ddev.site` hostname can return `ERR_CONNECTION_RESET` in the browser even though the containers are
+> healthy and router → web is 200 internally — OrbStack's host port forwarding is stale. Fully
+> re-initialize it with `ddev poweroff && ddev start`. A direct `127.0.0.1:<port>` (from `ddev describe`)
+> often still works as a stopgap — the same loopback fallback the
+> [visual-regression-upgrade skill](../visual-regression-upgrade/SKILL.md#when-ddevsite-is-unreachable-use-127001port)
+> relies on.
