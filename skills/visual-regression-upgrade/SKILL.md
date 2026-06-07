@@ -86,6 +86,30 @@ Mask domain-restricted widgets that can't render locally — e.g. a Google stati
 { "/contact-us/": [".addressMap"] }
 ```
 
+#### When `.ddev.site` is unreachable: use `127.0.0.1:<port>`
+
+`--insecure` handles self-signed `.ddev.site` certs, but it does **not** help when the agent/sandbox
+shell can't resolve or reach the `.ddev.site` hostname at all (`curl` returns HTTP 000 / SSL exit 35).
+Driven from such a shell, every page errors with `ERR_CONNECTION_RESET`, and the **whole run finishes
+in ~3 seconds with all-ERROR results** — easy to mistake for a broken capture.
+
+Use the direct host port mappings from `ddev describe` instead of the hostname:
+
+```bash
+ddev describe   # Project URLs → http://127.0.0.1:NNNNN
+python scripts/capture.py \
+  --prod  http://127.0.0.1:<legacy-port> \
+  --local http://127.0.0.1:<upgrade-port> \
+  --paths-file paths.txt --mask masks.json --out ./vr-out
+```
+
+- **Ports are dynamic** — they change after `ddev restart` / `ddev mutagen reset` / `ddev poweroff`.
+  Re-read `ddev describe` each session.
+- Prefer the **plain-HTTP** mapped port (returns 200, no `--insecure` needed). HTTPS on
+  `127.0.0.1:<https-port>` still fails cert validation.
+- A realistic **2–3s per-page** capture time is the signal it actually loaded. A 3-second *whole-run*
+  with all ERRORs means it never reached the host — switch to the loopback ports.
+
 ### Step 3 — Diff + report
 
 ```bash
@@ -140,6 +164,7 @@ open ./vr-out/report/index.html
 | Auth fails on UAT | Site uses form login, not basic auth | Capture cookies via browser devtools, save as `cookies.json` |
 | Diff image looks like static | Both screenshots loaded but viewports differ | Confirm `--viewport` matches; some themes are width-responsive |
 | `playwright._impl._errors.Error: net::ERR_CERT_AUTHORITY_INVALID` | Self-signed UAT cert | Use `--insecure` flag (sets `ignore_https_errors=True`) |
+| Whole run finishes in ~3s, every page `ERR_CONNECTION_RESET` (curl → HTTP 000 / SSL exit 35) | Agent/sandbox shell can't reach the `.ddev.site` hostname | Capture against the `127.0.0.1:<port>` mappings from `ddev describe` — see [When `.ddev.site` is unreachable](#when-ddevsite-is-unreachable-use-127001port) |
 | Diff localized to a map/embed, identical placeholder both sides | API key is domain-restricted (renders only on the prod domain) | Mask the widget selector; verify on the real prod/pre-prod domain |
 
 ## SilverStripe-specific notes
