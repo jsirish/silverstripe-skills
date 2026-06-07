@@ -41,7 +41,7 @@ thin workflow file only if you also want a one-keystroke auto-runner.
 
 Minimal `.claude/commands/migrate.md` starter — fill in the task list from the workflow below:
 
-```markdown
+````markdown
 ---
 description: Run the full SS5 data migration for <PROJECT> after a fresh prod sync
 ---
@@ -76,7 +76,7 @@ ddev sake dev/tasks/NavigationMigrationTask "flush=1"
 - [ ] Frontend QA of each page type — no blank pages
 - [ ] ElementalArea_Live populated; CMS Settings/SiteConfig section works
 - [ ] <project-specific checks: footer nav, slide-image links, etc.>
-```
+````
 
 > [!TIP]
 > The SS3→SS4 skill ships a richer copy-paste template (with a breaking-changes table) at

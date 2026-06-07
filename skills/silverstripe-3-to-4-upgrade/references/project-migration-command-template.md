@@ -28,7 +28,7 @@ auto-runner.)
 
 ## Template — copy into `.claude/commands/migrate.md`
 
-```markdown
+````markdown
 ---
 description: Run the full SS3→SS4 data migration for <PROJECT> after a fresh prod sync
 ---
@@ -111,7 +111,7 @@ Record the confirmation string / row count each task prints, so a bad run is obv
 - <e.g. SiteTreeID rows deleted on prod — UtilityLinks task must skip them>
 - <e.g. OrbStack stale ports after ddev restart — re-read `ddev describe`>
 - <add as discovered>
-```
+````
 
 ---
 
