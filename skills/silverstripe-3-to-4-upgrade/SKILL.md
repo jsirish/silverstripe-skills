@@ -229,6 +229,9 @@ Before `dev/build` can succeed, you must resolve SS3 legacy schema blockers.
 
 Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormParentClassMigrationTask`) are usually required to handle project-specific business logic using raw SQL.
 
+> [!TIP]
+> **Capture the per-project task sequence as a `/migrate` slash command.** Every project ends up with its own ordered task list, environment table, and gotchas. Rather than re-inventing the structure each time, formalize it as `.claude/commands/migrate.md` so a developer can type `/migrate` and load the full runbook. A copy-paste starter — environments table, breaking-changes table, repeatable bash workflow, expected outputs, and verification checklist — is in [references/project-migration-command-template.md](references/project-migration-command-template.md). Keep the migration tasks in a `migrate.sh` runner (see the `devbuild.sh` convention in [Phase 8](#phase-8-build--verify)), not in `devbuild.sh`.
+
 1. **Fix Corrupted ParentClasses (Critical)**
    ```bash
    ddev sake dev/tasks/form-parent-migration
@@ -278,6 +281,28 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 > **Template Variant Naming**: Elemental uses `getAreaRelationName()` for suffixing. If a page has `has_one: ['ElementalHomePage' => ElementalArea::class]`, the variant file must be named `ElementPromos_ElementalHomePage.ss`.
 
 ## Phase 8: Build & Verify
+
+> [!IMPORTANT]
+> **`devbuild.sh` is cache-rebuild-only — keep migration tasks out of it.** DeployHQ runs
+> `devbuild.sh` after every code deploy, so it must do nothing but clear the cache and
+> rebuild the schema. The canonical version is three lines:
+> ```bash
+> #!/usr/bin/env bash
+> rm -rf silverstripe-cache
+> mkdir silverstripe-cache
+> vendor/bin/sake dev/build
+> ```
+> Data-migration tasks belong in a **separate `migrate.sh`** (or the `/migrate` slash
+> command — see [Phase 6](#phase-6-data-migration-tasks)), invoked manually after a fresh
+> prod sync. Two reasons:
+> - **No double `dev/build`.** A full-loop script that runs an explicit `dev/build` and
+>   then `ddev exec ./devbuild.sh` will build twice if `devbuild.sh` also runs `dev/build`
+>   plus tasks — and worse, run migration tasks in a context that only meant to rebuild cache.
+> - **"Build" ≠ "migrate."** DeployHQ deploys code and rebuilds cache; it should never fire
+>   migration tasks. Conflating the two means a routine deploy silently re-runs data
+>   migrations. (Both `example-manufacturing` and `example-multiarea` settled on the 3-line
+>   `devbuild.sh`; an early `example-custom` shipped 50 lines of tasks + SQL inside it and hit
+>   exactly this double-build/re-migrate trap.)
 
 1. **Run dev/build**:
    ```bash
