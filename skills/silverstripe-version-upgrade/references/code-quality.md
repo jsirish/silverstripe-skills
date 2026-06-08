@@ -170,21 +170,3 @@ For SS4→SS5 upgrades, use the legacy local instance (`~/Sites/{project}-legacy
 | Rector level set | `UP_TO_SS_5_0` | `UP_TO_SS_6_0` |
 | PHPStan | `cambis/silverstan ^2.1` | `cambis/silverstan ^2.1` (add `treatPhpDocTypesAsCertain: false`) |
 | CI php-version | `'8.1'` | `'8.3'` |
-
-### SS6 code quality summary
-
-| Tool | SS5 Config | SS6 Config |
-|------|-----------|-----------|
-| PHP version | 8.1 | 8.3 |
-| Rector level set | `UP_TO_SS_5_0` | `UP_TO_SS_6_0` |
-| PHPStan | `cambis/silverstan ^2.1` | `cambis/silverstan ^2.1` (add `treatPhpDocTypesAsCertain: false`) |
-| CI php-version | `'8.1'` | `'8.3'` |
-
-### SS6 code quality summary
-
-| Tool | SS5 Config | SS6 Config |
-|------|-----------|-----------|
-| PHP version | 8.1 | 8.3 |
-| Rector level set | `UP_TO_SS_5_0` | `UP_TO_SS_6_0` |
-| PHPStan | `cambis/silverstan ^2.1` | `cambis/silverstan ^2.1` (add `treatPhpDocTypesAsCertain: false`) |
-| CI php-version | `'8.1'` | `'8.3'` |
