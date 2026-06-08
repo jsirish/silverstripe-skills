@@ -265,6 +265,13 @@ foreach ($legacyRows as $row) {
     if ($row['Phone']) {
         $link->Phone = $row['Phone'];
     }
+    if (!empty($row['Anchor'])) {
+        // Append fragment — project-specific judgement call
+        $anchor = ltrim($row['Anchor'], '#');
+        if ($link->URL) {
+            $link->URL .= '#' . $anchor;
+        }
+    }
 
     $link->write();
     $link->publishRecursive();
@@ -293,12 +300,116 @@ SilverStripe\LinkField\Migration\LinkableMigrationTask:
 When `dynamic/silverstripe-base-site` upgrades for SS6, two patterns emerge:
 
 **UtilityLinks**: `many_many SiteTree` → `has_many SiteTreeLink`
-- Read old `SiteConfig_UtilityLinks` join table via raw SQL
-- Create `SiteTreeLink` records with `OwnerRelation='UtilityLinks'`
-- Skip if any already exist (skip-if-exists idempotency)
+
+```php
+// Legacy: SiteConfig_UtilityLinks join table (SiteTreeID + SiteConfigID)
+// New: SiteTreeLink records owned by SiteConfig
+use SilverStripe\LinkField\Models\SiteTreeLink;
+use SilverStripe\ORM\Queries\SQLSelect;
+
+$legacyRows = SQLSelect::create()
+    ->setFrom('SiteConfig_UtilityLinks')
+    ->setOrderBy('"SiteConfig_UtilityLinks"."SortOrder" ASC')
+    ->execute();
+
+$createdCount = 0;
+
+foreach ($legacyRows as $row) {
+    // Skip if any SiteTreeLink with this OwnerRelation already exist (skip-if-exists idempotency)
+    if ($createdCount > 0 || SiteTreeLink::get()->filter([
+        'OwnerClass' => 'SilverStripe\\SiteConfig\\SiteConfig',
+        'OwnerRelation' => 'UtilityLinks',
+    ])->exists()) {
+        if ($createdCount === 0) {
+            $createdCount = SiteTreeLink::get()->filter([
+                'OwnerClass' => 'SilverStripe\\SiteConfig\\SiteConfig',
+                'OwnerRelation' => 'UtilityLinks',
+            ])->count();
+        }
+        $this->log("  - Skipped: UtilityLinks already migrated ({$createdCount} records exist)");
+        return;
+    }
+
+    $link = SiteTreeLink::create();
+    $link->PageID = (int) $row['SiteTreeID'];
+    $link->Sort = (int) ($row['SortOrder'] ?? 0);
+    $link->OwnerID = (int) $row['SiteConfigID'];
+    $link->OwnerClass = 'SilverStripe\\SiteConfig\\SiteConfig';
+    $link->OwnerRelation = 'UtilityLinks';
+    $link->write();
+    $link->publishRecursive();
+    $createdCount++;
+}
+
+$this->log("Created {$createdCount} UtilityLinks.");
+```
 
 **SocialLink model**: Standalone → extends `ExternalLink`
-- Old columns: `ConfigID`, `Link` (URL), `Site` (enum: twitter/facebook/etc.)
-- New columns: `OwnerID`, `ExternalUrl`, `SocialChannel` (varchar)
-- Map enum values: `twitter` → `x`, `facebook` → `facebook`, `instagram` → `instagram`, etc.
-- Identify SS5 records via `ConfigID > 0` (SS6 records use `OwnerID` in `LinkField_Link`)
+
+```php
+// Legacy: SocialLink table with ConfigID, Link (URL), Site (enum)
+// New: ExternalLink records in LinkField_Link with SocialChannel varchar
+use SilverStripe\LinkField\Models\ExternalLink;
+use SilverStripe\ORM\Queries\SQLSelect;
+
+$channelMap = [
+    'twitter' => 'x',
+    'facebook' => 'facebook',
+    'instagram' => 'instagram',
+    'linkedin' => 'linkedin',
+    'youtube' => 'youtube',
+    'vimeo' => 'vimeo',
+    'email' => 'email',
+];
+
+$legacyRows = SQLSelect::create()
+    ->setFrom('SocialLink')
+    ->where(['"SocialLink"."ConfigID" > ?' => 0])  // SS5 records only
+    ->execute();
+
+foreach ($legacyRows as $row) {
+    $existing = ExternalLink::get()->filter([
+        'ExternalUrl' => $row['Link'],
+        'OwnerID' => (int) $row['ConfigID'],
+        'OwnerClass' => 'SilverStripe\\SiteConfig\\SiteConfig',
+        'OwnerRelation' => 'SocialLinks',
+    ])->first();
+
+    if ($existing) {
+        continue;
+    }
+
+    $link = ExternalLink::create();
+    $link->ExternalUrl = $row['Link'];
+    $link->Title = $row['Title'] ?? '';
+    $link->Sort = (int) ($row['Sort'] ?? 0);
+
+    // Map the legacy enum to the new SocialChannel varchar
+    $channel = strtolower(trim($row['Site'] ?? ''));
+    $link->SocialChannel = $channelMap[$channel] ?? $channel;
+
+    $link->OwnerID = (int) $row['ConfigID'];
+    $link->OwnerClass = 'SilverStripe\\SiteConfig\\SiteConfig';
+    $link->OwnerRelation = 'SocialLinks';
+    $link->write();
+    $link->publishRecursive();
+}
+```
+
+> [!TIP]
+> Old columns reference: `ConfigID` (SS5), `Link` (URL), `Site` (enum). New columns: `OwnerID`, `ExternalUrl`, `SocialChannel` (varchar). Identify SS5 records via `ConfigID > 0` — SS6 records use `OwnerID` in `LinkField_Link`.
+
+**Legacy Anchor field handling** (Linkable → LinkField):
+
+If your legacy `LinkableLink` records have non-empty `Anchor` values (e.g. `#section`), append them to the URL when creating LinkField records. This is a judgment call per project — some teams drop anchors, others preserve them:
+
+```php
+if (!empty($row['Anchor'])) {
+    $anchor = ltrim($row['Anchor'], '#');
+    if ($link->URL) {
+        $link->URL .= '#' . $anchor;
+    } elseif ($link->Type === 'URL') {
+        $link->URL = '#' . $anchor;
+    }
+}
+```
