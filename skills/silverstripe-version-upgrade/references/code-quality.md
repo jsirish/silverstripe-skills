@@ -31,6 +31,27 @@ ddev exec vendor/bin/phpcs app/src/
 ddev exec vendor/bin/phpstan analyse app/src/
 ```
 
+#### PHPStan SS6 config
+
+Add to `phpstan.neon` to suppress SS6 PHPDoc false-positives:
+
+```neon
+parameters:
+    treatPhpDocTypesAsCertain: false
+```
+
+`cambis/silverstan ^2.1` is the companion PHPStan tool for SS6 — already in the dev dependencies list above.
+
+#### Known annoyance: ideannotator vs PHPStan
+
+> [!WARNING]
+> `silverleague/ideannotator` rewrites `@method`/`@property` docblocks to short-form on every `dev/build`, re-breaking PHPStan's FQN resolution. **Commit code before running `dev/build`**, or revert the regenerated docblocks after.
+>
+> Options to mitigate:
+> - Configure ideannotator to use FQN mode (no `use` imports)
+> - Set `treatPhpDocTypesAsCertain: false` in PHPStan (already done above)
+> - Remove ideannotator from `require-dev` and run it only on demand
+
 ### Rector (if configured)
 
 `wernerkrauss/silverstripe-rector` provides automated upgrade rules for Silverstripe CMS. Always use `--dry-run` first:
@@ -41,6 +62,23 @@ ddev exec vendor/bin/rector  # apply when ready
 ```
 
 Configuration is project-specific — see [github.com/wernerkrauss/silverstripe-rector](https://github.com/wernerkrauss/silverstripe-rector) for available rule sets.
+
+#### SS6 Rector level set
+
+`wernerkrauss/silverstripe-rector` provides SS6 upgrade rules:
+
+```php
+// rector.php — SS6 level set
+SilverstripeLevelSetList::UP_TO_SS_6_0
+```
+
+The SS6 level set handles: namespace migrations (ArrayList, ValidationResult, SSViewer), BuildTask → Symfony conversions, mixin ordering, forTemplate return type enforcement, and more.
+
+```bash
+# Run SS6-specific rector rules
+ddev exec vendor/bin/rector --dry-run
+ddev exec vendor/bin/rector  # apply when ready
+```
 
 ### GitHub Actions CI (optional but recommended)
 
@@ -63,7 +101,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.3'  # SS6 minimum
           extensions: intl, gd, mysqli
           coverage: none
       - run: composer install --no-interaction --prefer-dist
@@ -74,7 +112,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.3'  # SS6 minimum
           extensions: intl, gd, mysqli
           coverage: none
       - run: composer install --no-interaction --prefer-dist
@@ -85,7 +123,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.3'  # SS6 minimum
           extensions: intl, gd, mysqli
       - run: composer install --no-interaction --prefer-dist
       - run: vendor/bin/phpunit
@@ -123,3 +161,12 @@ python ../visual-regression-upgrade/scripts/diff_report.py \
 ```
 
 For SS4→SS5 upgrades, use the legacy local instance (`~/Sites/{project}-legacy`) as the reference to avoid content-drift false positives.
+
+### SS6 code quality summary
+
+| Tool | SS5 Config | SS6 Config |
+|------|-----------|-----------|
+| PHP version | 8.1 | 8.3 |
+| Rector level set | `UP_TO_SS_5_0` | `UP_TO_SS_6_0` |
+| PHPStan | `cambis/silverstan ^2.1` | `cambis/silverstan ^2.1` (add `treatPhpDocTypesAsCertain: false`) |
+| CI php-version | `'8.1'` | `'8.3'` |
