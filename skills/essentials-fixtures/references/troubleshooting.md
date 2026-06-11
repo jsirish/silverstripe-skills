@@ -47,6 +47,18 @@ linter before re-running.
 [Configuration → truncate_objects](./configuration.md#truncate_objects)). Never point
 `truncate_objects` at a database with real content.
 
+### 7. Elements Populated With Placeholder / Wrong Colors
+**Symptom:** Every populated block renders with the essentials-theme placeholder
+palette (purple `#9575EA`, lavender `#CCBEF5`, …) instead of the project's brand colors.
+**Cause:** `PopulateTask` ran before the project palette was substituted into
+`app/_config/essentials-styles.yml`. The `ColorConfigurationProvider` palette is
+read once at populate time and stored on each record; editing the YAML afterward
+does not update existing records.
+**Fix:** Set the palette first, then rebuild the affected records — see
+[Configuration → Color palette](./configuration.md#color-palette--set-before-first-populate).
+Re-run with the affected Element classes in
+[`truncate_objects`](./configuration.md#truncate_objects); never against real content.
+
 ## Known Vendor Bug
 <a id="known-vendor-bug"></a>
 **Issue:** `dnadesign/silverstripe-populate` bug in `populateFile()` returns `true` instead of the File object when hashes match.

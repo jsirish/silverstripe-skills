@@ -89,6 +89,30 @@ DNADesign\Elemental\Models\ElementContent:
     - Dynamic\Recipe\Fixtures\Extensions\FixtureRecordExtension
 ```
 
+## Color palette — set before first Populate
+`ColorConfigurationProvider` (`background_colors` / `button_colors` in
+`app/_config/essentials-styles.yml`) is read **once at populate time** and the
+resulting color values are stored on each Element record. Editing the YAML
+afterward does **not** retro-update records already created — so the project
+palette must be in place before the first `PopulateTask` run.
+
+The recipe ships with essentials-theme placeholder colors (purple `#9575EA`,
+lavender `#CCBEF5`, …). Replace them with the project's brand palette first, e.g.
+`#EF4423` / `#78CDD7` / `#111111` — sourced from one of:
+- **Figma** — variable defs via `mcp__Figma__get_variable_defs`.
+- **XD prototype** — sample PNG exports (PIL/Pillow) for hex values.
+- **Brand guide / style tiles**.
+
+For the `essentials-styles.yml` shape itself (`background_colors` array + nested
+per-background `button_colors`), see the **Silverstripe Essentials Website**
+skill's *essentials-styles.yml Pattern* — don't re-document it here.
+
+> [!CAUTION]
+> If Populate already ran with placeholder colors, fix `essentials-styles.yml`,
+> then re-run with the affected Element classes listed in
+> [`truncate_objects`](#truncate_objects) so the records are rebuilt with the
+> correct palette. Never point `truncate_objects` at a database holding real content.
+
 ## The dev-only guard
 Both config blocks use `Only: { environment: 'dev' }` so fixtures and their extension
 registrations never activate in production. Keep this guard on every fixture-populate YAML.
