@@ -347,7 +347,7 @@ Before considering a template complete:
 
 ### PopulateFactory `return true` Bug
 
-The `dnadesign/silverstripe-populate` package has a bug where `populateFile()` returns `true` instead of the File object when an existing file's hash matches. This crashes on `$file->ID`. **Patch required** — see the **Essentials Fixtures** skill troubleshooting section #9 for the fix.
+The `dnadesign/silverstripe-populate` package has a bug where `populateFile()` returns `true` instead of the File object when an existing file's hash matches. This crashes on `$file->ID`. **Patch required** — see [Essentials Fixtures → Known Vendor Bug](../essentials-fixtures/references/troubleshooting.md#known-vendor-bug) for the fix.
 
 ### Multi-Table Inheritance Orphans
 

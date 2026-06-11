@@ -117,6 +117,13 @@ def apply_masks(page, selectors):
         return
     page.evaluate(
         """(sels) => {
+            // Freeze all jarallax instances so they can't re-apply background-image
+            // after we override it below.
+            if (window.jarallax) {
+                document.querySelectorAll('[data-jarallax],.jarallax').forEach(el => {
+                    try { window.jarallax(el, 'destroy'); } catch (e) { console.warn('jarallax destroy failed on element:', e); }
+                });
+            }
             for (const sel of sels) {
                 let elements;
                 try {
@@ -166,7 +173,42 @@ def masks_for_path(masks_cfg, path):
     return out
 
 
-def capture_env(label, base_url, paths, out_dir, viewport, wait, auth, cookies, masks_cfg, insecure, wait_until):
+def wait_for_fonts(page, timeout_ms=10000):
+    """Await document.fonts.ready (CSS Font Loading API).
+
+    Resolves when every @font-face declared on the page has either loaded
+    or failed. Returns a list of font faces whose status is 'error' so the
+    caller can surface real CDN/allowlist problems separately from the
+    timing race this function exists to fix.
+    """
+    try:
+        return page.evaluate(
+            """async (timeoutMs) => {
+                const deadline = new Promise((resolve) =>
+                    setTimeout(() => resolve('timeout'), timeoutMs)
+                );
+                await Promise.race([document.fonts.ready, deadline]);
+                const errors = [];
+                document.fonts.forEach((f) => {
+                    if (f.status === 'error') {
+                        errors.push({
+                            family: f.family,
+                            style: f.style,
+                            weight: f.weight,
+                            unicodeRange: f.unicodeRange,
+                        });
+                    }
+                });
+                return errors;
+            }""",
+            timeout_ms,
+        )
+    except Exception as e:
+        print(f"  [font-wait] evaluation error (fonts.ready unavailable): {e}", file=sys.stderr, flush=True)
+        return []
+
+
+def capture_env(label, base_url, paths, out_dir, viewport, wait, auth, cookies, masks_cfg, insecure, wait_until, settle, block_urls):
     out_dir.mkdir(parents=True, exist_ok=True)
     results = []
     with sync_playwright() as p:
@@ -182,6 +224,21 @@ def capture_env(label, base_url, paths, out_dir, viewport, wait, auth, cookies, 
         context = browser.new_context(**ctx_kwargs)
         if cookies:
             context.add_cookies(cookies)
+        if block_urls:
+            import re as _re
+            # Anchor each pattern at a domain/path boundary so "termly.io/..."
+            # doesn't also match "nottermly.io/...".  Each user pattern must be
+            # preceded by start-of-string, ".", or "/" in the full URL.
+            combined = "|".join(
+                r"(?:(?:^|[./])" + _re.escape(p) + ")"
+                for p in block_urls
+            )
+            _block_re = _re.compile(combined, _re.IGNORECASE)
+
+            def _block(route):
+                route.abort()
+
+            context.route(_block_re, _block)
 
         for path in paths:
             slug = slugify(path)
@@ -196,6 +253,14 @@ def capture_env(label, base_url, paths, out_dir, viewport, wait, auth, cookies, 
                 entry["http_status"] = status
                 auto_scroll(page)
                 page.wait_for_timeout(int(wait * 1000))
+                font_errors = wait_for_fonts(page, timeout_ms=10000)
+                if font_errors:
+                    entry["font_errors"] = font_errors
+                if settle == "networkidle":
+                    try:
+                        page.wait_for_load_state("networkidle", timeout=10000)
+                    except Exception as e:
+                        entry["settle_warning"] = f"networkidle timeout: {e}"
                 apply_masks(page, masks_for_path(masks_cfg, path))
                 page.screenshot(path=str(out_path), full_page=True)
                 if status is not None and status >= 400:
@@ -244,6 +309,17 @@ def main():
         help="Playwright navigation wait condition (default: load). Use networkidle for fully-static sites; load is safer on sites with analytics/chat/polling.",
     )
     ap.add_argument("--wait", type=float, default=2.0, help="Extra wait seconds after navigation completes")
+    ap.add_argument(
+        "--settle",
+        choices=("load", "networkidle"),
+        default="load",
+        help=(
+            "Pre-screenshot settle strategy (default: load). "
+            "'load' awaits document.fonts.ready only. "
+            "'networkidle' additionally waits for the network to be idle — "
+            "recommended for sites with Termly/HubSpot/Hotjar that inject iframes asynchronously."
+        ),
+    )
     auth_help = (
         "HTTP basic auth. Accepts: 'user:pass' (visible in argv — discouraged), "
         "'env:VARNAME' (read user:pass from one env var), "
@@ -258,6 +334,14 @@ def main():
     ap.add_argument("--local-cookies", help="Path to Playwright-format cookies JSON for local/UAT only. Overrides --cookies.")
     ap.add_argument("--mask", help='Path to masks.json: {"/path": ["selector", ...]}')
     ap.add_argument("--insecure", action="store_true", help="Ignore HTTPS errors (self-signed certs)")
+    ap.add_argument(
+        "--block-urls",
+        help=(
+            "Comma-separated URL substrings to block on both sides via Playwright route interception. "
+            "Useful for consent-management scripts (e.g. 'termly.io/resource-blocker') that run on prod "
+            "but not locally and block first-party content before cookie consent is granted."
+        ),
+    )
     args = ap.parse_args()
 
     if args.paths_file:
@@ -273,6 +357,7 @@ def main():
     cookies = load_json(args.cookies) if args.cookies else None
     masks_cfg = load_json(args.mask) if args.mask else None
     resolved_auth = resolve_auth(args.auth)
+    block_urls = [u.strip() for u in args.block_urls.split(",") if u.strip()] if args.block_urls else []
 
     # Per-env auth/cookies take precedence over the shared --auth/--cookies flags.
     # This prevents UAT credentials being sent to production when only UAT is protected.
@@ -284,11 +369,11 @@ def main():
     started = datetime.now(timezone.utc).isoformat()
     prod_results = capture_env(
         "prod", args.prod, paths, out / "prod",
-        args.viewport, args.wait, prod_auth, prod_cookies, masks_cfg, args.insecure, args.wait_until,
+        args.viewport, args.wait, prod_auth, prod_cookies, masks_cfg, args.insecure, args.wait_until, args.settle, block_urls,
     )
     local_results = capture_env(
         "local", args.local, paths, out / "local",
-        args.viewport, args.wait, local_auth, local_cookies, masks_cfg, args.insecure, args.wait_until,
+        args.viewport, args.wait, local_auth, local_cookies, masks_cfg, args.insecure, args.wait_until, args.settle, block_urls,
     )
     finished = datetime.now(timezone.utc).isoformat()
 
@@ -298,6 +383,8 @@ def main():
         "viewport": args.viewport,
         "wait": args.wait,
         "wait_until": args.wait_until,
+        "settle": args.settle,
+        "block_urls": block_urls,
         "started": started,
         "finished": finished,
         "paths": paths,

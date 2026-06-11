@@ -9,8 +9,8 @@ scalars and two nav relations — off the removed `GlobalSiteSetting` and onto t
 > unwound later. Adopt the base-site `SiteConfig` extensions and migrate the legacy data into them.
 
 This is the SS3→SS4 analogue of the `ss5-data-migration` skill's `migrate-footer-links` /
-`NavigationMigrationTask`. Patterns distilled from Safe Harbor's `GlobalSiteSettingMigrationTask`
-(the work that landed late, in PR #43, and looked like it had never been migrated at all — the reason
+`NavigationMigrationTask`. Patterns distilled from a production `GlobalSiteSettingMigrationTask`
+(work that landed late and looked like it had never been migrated at all — the reason
 this is now captured reusably).
 
 ## What moves
