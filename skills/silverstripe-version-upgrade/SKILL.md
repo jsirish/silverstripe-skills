@@ -253,6 +253,22 @@ curl -sI https://site.example.com/ | grep -i 'set-cookie'
 # Expected: PHPSESSID=...; path=/; secure; HttpOnly; SameSite=Strict
 ```
 
+**`classname_value_remapping` YAML key renamed** — In SS4/5 the key was `SilverStripe\ORM\DatabaseAdmin`. In SS6 the class no longer exists; use `SilverStripe\Dev\Command\DbBuild` instead. Using the old key is **silently ignored** — `dev/build` runs without error but no remapping occurs, leaving legacy class names in the DB and causing "obsolete type" warnings in the CMS for every affected page.
+
+```yaml
+# SS4/SS5 (WRONG in SS6 — silently ignored)
+SilverStripe\ORM\DatabaseAdmin:
+  classname_value_remapping:
+    OldClass: NewClass
+
+# SS6 (correct)
+SilverStripe\Dev\Command\DbBuild:
+  classname_value_remapping:
+    OldClass: NewClass
+```
+
+After correcting the key, a single `dev/build flush=1` migrates all affected rows in both `SiteTree` and `SiteTree_Live`. The build output will confirm: *"Correcting obsolete ClassName values for N outdated types."* Side effect: migrated pages gain a draft/live diff and show as MODIFIED — republish them afterward.
+
 ## Phase 5: Data Migration
 
 See [references/data-migration-tasks.md](references/data-migration-tasks.md) for the BuildTask pattern, migration principles, and common scenarios (Linkable → Link, ManyMany → LinkField).
@@ -318,6 +334,8 @@ See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill
 > **BuildTask signature changed in SS6.** `run($request)` → `execute(InputInterface $input, PolyOutput $output): int` returning `Command::SUCCESS`. All custom BuildTask subclasses must be updated.
 >
 > **TinyMCE extracted.** `silverstripe/htmleditor-tinymce ^1.0` must be in `require` (not `require-dev`). If missing, CMS Content fields silently degrade to plain textareas — no error, no console warning.
+>
+> **`classname_value_remapping` YAML key changed.** SS6 renamed `SilverStripe\ORM\DatabaseAdmin` → `SilverStripe\Dev\Command\DbBuild`. The old key is silently ignored — remapping never runs, pages keep obsolete class names. Fix the YAML key and re-run `dev/build flush=1`.
 >
 > **DB connection default changed.** SS6 defaults to unix socket. DDEV requires `SS_DATABASE_SERVER=db` in `.ddev/config.yaml`.
 >

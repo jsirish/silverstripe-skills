@@ -11,11 +11,44 @@ ddev mysql -e "DELETE sm FROM StaffMember sm LEFT JOIN BaseElementObject bo ON s
 ddev sake dev/tasks/PopulateTask "flush=1"
 ```
 
-### 2. Cross-File Reference Errors
+### 2. Cross-File Reference Errors / Load Order
 **Symptom:** `Could not resolve reference =>SilverStripe\Assets\Image.someImage`
-**Fix:** Ensure `shared-assets.yml` is loaded FIRST in the `include_yaml_fixtures` list.
+**Cause:** References (`=>Class.identifier`) only resolve to records defined **earlier** in the run.
+**Fix:** Order `include_yaml_fixtures` so assets and dependencies load before the files that
+reference them — `shared-assets.yml` FIRST. See
+[Configuration → ordering rules](./configuration.md#include_yaml_fixtures--ordering-rules).
+
+### 3. Records Load But Don't Appear
+**Symptom:** `PopulateTask` reports success, no errors, but the records never show in the CMS.
+**Cause:** The DataObject class is in your fixture YAML but `FixtureRecordExtension` was not
+registered on it, so Populate has no identity tracking for the record.
+**Fix:** Register `FixtureRecordExtension` on **every** class that appears as a fixture block (each
+Element subclass + nested models, not just `SiteTree`/`File`). See
+[Configuration → Extension registration](./configuration.md#extension-registration--which-classes).
+
+### 4. Missing Dependency / Class Not Found
+**Symptom:** `Class "Dynamic\Recipe\Fixtures\Extensions\FixtureRecordExtension" not found`, or a
+referenced fixture path errors as missing.
+**Fix:** Confirm `dynamic/recipe-silverstripe-essentials-fixtures` is installed
+(`composer show | grep essentials-fixtures`) and the `vendor/dynamic/...` fixture paths in
+`include_yaml_fixtures` actually exist for the installed version. Run `ddev composer install` if the
+package was added but not pulled.
+
+### 5. YAML Syntax / Parse Errors
+**Symptom:** `dev/build` or the Populate run dies parsing the fixture config.
+**Fix:** YAML is whitespace-sensitive — use spaces (never tabs), keep `---` document separators
+around each `Name:` block, and quote values containing `:` or leading `=>`. Validate a suspect file
+with `ddev exec php -r "print_r(yaml_parse_file('app/_config/fixtures-populate.yml'));"` or any YAML
+linter before re-running.
+
+### 6. Stale / Duplicated Data After Re-run
+**Symptom:** Re-running `PopulateTask` accumulates duplicate records instead of refreshing.
+**Fix:** Add the affected classes to `truncate_objects` so each run starts clean (see
+[Configuration → truncate_objects](./configuration.md#truncate_objects)). Never point
+`truncate_objects` at a database with real content.
 
 ## Known Vendor Bug
+<a id="known-vendor-bug"></a>
 **Issue:** `dnadesign/silverstripe-populate` bug in `populateFile()` returns `true` instead of the File object when hashes match.
 **Fix:** Patch `vendor/dnadesign/silverstripe-populate/code/PopulateFactory.php` at the `return true;` in `populateFile()` so it returns the existing `File` object instead. Use whatever variable name holds that existing file in your local version of `PopulateFactory.php` (for example, `$existingObj`):
 ```diff

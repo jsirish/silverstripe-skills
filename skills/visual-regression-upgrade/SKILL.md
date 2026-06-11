@@ -59,6 +59,8 @@ Optional flags:
 - `--viewport 1440x900` (default)
 - `--wait-until load` (default) — Playwright navigation condition. Use `networkidle` for fully-static sites; `load` is safer on sites with analytics/chat widgets/long-polling
 - `--wait 2.0` — extra seconds to wait after navigation completes
+- `--settle {load,networkidle}` (default `load`) — pre-screenshot settle strategy. **Both modes await `document.fonts.ready`** with a 10s cap so screenshots never snap mid-FOIT/FOUT. `networkidle` additionally waits for the network to go idle — recommended for sites embedding Termly, HubSpot, Hotjar, or any 3rd party that injects iframes asynchronously. Font faces that report `status === 'error'` (real CDN allowlist failures) are recorded in `manifest.json` under each entry's `font_errors`
+- `--block-urls pattern1,pattern2` — comma-separated URL substrings to block on **both** sides via Playwright route interception. Use for consent-management scripts that run on production but not locally and block first-party content before cookie consent is granted (e.g. `--block-urls termly.io/resource-blocker`). Blocking is applied symmetrically so neither side runs the gating script
 - `--auth` / `--prod-auth` / `--local-auth` — HTTP basic auth, applied to both environments or scoped to one. Prefer `env:VR_AUTH` / `env:VR_USER/VR_PASS` / `prompt`. Use `--local-auth` when only UAT is protected to avoid sending UAT credentials to production.
 - `--cookies` / `--prod-cookies` / `--local-cookies` — Playwright-format cookie list, applied to both or scoped to one environment
 - `--mask masks.json` — `{ "/path/or/*": ["selector1", ".cookie-banner"] }` — paints these regions `#cccccc` before snapping. Use this for rotating banners, date stamps, "users online now" counters.
@@ -146,6 +148,7 @@ python scripts/capture.py \
   --paths-file  paths.txt \
   --local-auth  env:VR_AUTH \
   --mask        masks.json \
+  --settle      networkidle \
   --out         ./vr-out
 
 # 3. Report
@@ -159,7 +162,8 @@ open ./vr-out/report/index.html
 |---------|--------------|-----|
 | All screenshots blank/white | JS-heavy SPA not finished rendering | Bump `--wait` to 3-5s; check console errors in `manifest.json` |
 | Every page reports ~100% diff | Viewport mismatch, or one env is mobile-redirecting | Force `--viewport 1440x900` on both; check redirects with curl |
-| Font rendering diffs everywhere | UAT can't reach Google Fonts (firewall) | Add Google Fonts CSS link or font-rendered elements to `masks.json` |
+| Font rendering diffs on one side (or one page only) | Screenshot fired before web fonts finished loading — a timing race, not a CDN problem | Use `--settle networkidle` (also bump `--wait 3.0`); both modes await `document.fonts.ready`. If `manifest.json` shows `font_errors` for that entry, the CDN really is rejecting the request — allowlist the capture origin in Adobe Fonts / fonts.com / Google Fonts, or mask the font-driven region as a last resort |
+| First-party content blocked on prod ("We couldn't verify the security of your connection" or blank hero) | A consent-management script (`autoBlock=on`) is running on prod and blocking resources before cookie consent. Not present on local. | Add the resource-blocker URL to `--block-urls` (e.g. `--block-urls termly.io/resource-blocker`). This prevents the gating script from running on both sides so the real content loads for comparison |
 | One side much taller | Lazy-loaded images on one env only | Capture script auto-scrolls; if still failing, increase `--wait` |
 | Auth fails on UAT | Site uses form login, not basic auth | Capture cookies via browser devtools, save as `cookies.json` |
 | Diff image looks like static | Both screenshots loaded but viewports differ | Confirm `--viewport` matches; some themes are width-responsive |

@@ -7,6 +7,19 @@ description: Start DDEV, sync remote database/assets, and rebuild local dev envi
 
 **Goal:** Fully synchronize a remote production database and assets into the local DDEV environment — start DDEV, install dependencies, pull DB + assets from production via SSH, and run the dev build.
 
+## Prerequisites
+
+DDEV must run the PHP version the project's Silverstripe major requires, or the `dev/build` after
+the sync fails with cryptic errors:
+
+| Silverstripe | PHP floor |
+|--------------|-----------|
+| SS4 | PHP 7.4+ |
+| SS5 | PHP 8.1+ |
+| SS6 | PHP 8.3+ |
+
+Set it in `.ddev/config.yaml` (`php_version`) before syncing if it doesn't already match.
+
 ## Deployment Model (Dynamic Agency standard)
 
 - **Code deploys via DeployHQ** — never via manual SSH or scripts.

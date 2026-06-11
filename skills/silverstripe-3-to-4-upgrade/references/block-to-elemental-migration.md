@@ -16,7 +16,7 @@ Detailed patterns for migrating `sheadawson/silverstripe-blocks` or `dynamic/dyn
 
 **Use two tasks** only if blocks live in multiple tables (e.g., a separate "BlockSet" concept that doesn't appear in `SiteTree_Blocks`) and you need to migrate block bodies before you can resolve placements.
 
-The Safe Harbor refactor (May 2026) collapsed two tasks into one and the result was 30% less code and cleaner idempotency.
+A production refactor (May 2026) collapsed two tasks into one and the result was 30% less code and cleaner idempotency.
 
 ## The canonical task structure
 

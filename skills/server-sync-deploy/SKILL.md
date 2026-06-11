@@ -100,7 +100,7 @@ Both scripts accept identical command-line flags to isolate deployments or test 
 > ```bash
 > git log origin/<branch>..<branch> --oneline   # must be empty before dhq deploy
 > ```
-> (Field evidence: master had 2 unpushed commits at deploy time on Safe Harbor — caught only by this check.)
+> (Field evidence: master had 2 unpushed commits at deploy time on a production project — caught only by this check.)
 
 > [!CAUTION]
 > **`composer install` skips packages whose constraint is already satisfied.** On a server with an existing `vendor/`, `composer install` will **not** re-fetch a package just because the locked content changed — leaving stale or mismatched code that passes locally but breaks the deploy. For a clean parity deploy, wipe first:
