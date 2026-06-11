@@ -182,12 +182,15 @@ def wait_for_fonts(page, timeout_ms=10000):
     timing race this function exists to fix.
     """
     try:
-        return page.evaluate(
+        result = page.evaluate(
             """async (timeoutMs) => {
                 const deadline = new Promise((resolve) =>
                     setTimeout(() => resolve('timeout'), timeoutMs)
                 );
-                await Promise.race([document.fonts.ready, deadline]);
+                const raceResult = await Promise.race([document.fonts.ready, deadline]);
+                if (raceResult === 'timeout') {
+                    return 'timeout';
+                }
                 const errors = [];
                 document.fonts.forEach((f) => {
                     if (f.status === 'error') {
@@ -203,6 +206,10 @@ def wait_for_fonts(page, timeout_ms=10000):
             }""",
             timeout_ms,
         )
+        if result == 'timeout':
+            print(f"  [font-wait] timed out after {timeout_ms}ms — fonts.ready did not resolve", file=sys.stderr, flush=True)
+            return []
+        return result
     except Exception as e:
         print(f"  [font-wait] evaluation error (fonts.ready unavailable): {e}", file=sys.stderr, flush=True)
         return []
