@@ -2,6 +2,12 @@
 
 Agent skills for [Silverstripe CMS](https://www.silverstripe.org/) development — version upgrades, Elemental content blocks, the Essentials theme stack, and deployment workflows. Maintained by [Jason Irish](https://github.com/jsirish).
 
+## Install
+
+```bash
+npx skills add jsirish/silverstripe-skills
+```
+
 ## Skills
 
 | Skill | Description |
