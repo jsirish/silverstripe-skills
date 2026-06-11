@@ -239,9 +239,12 @@ def capture_env(label, base_url, paths, out_dir, viewport, wait, auth, cookies, 
             # Anchor each pattern at a domain/path boundary so "termly.io/..."
             # doesn't also match "nottermly.io/...".  Each user pattern must be
             # preceded by start-of-string, ".", or "/" in the full URL.
+            # Explicit non-empty filter: re.escape("") produces an empty term
+            # that would make (?:^|[./]) match any position in the URL.
+            valid_patterns = [p for p in block_urls if p.strip()]
             combined = "|".join(
                 r"(?:(?:^|[./])" + _re.escape(p) + ")"
-                for p in block_urls
+                for p in valid_patterns
             )
             try:
                 _block_re = _re.compile(combined, _re.IGNORECASE)
@@ -270,7 +273,11 @@ def capture_env(label, base_url, paths, out_dir, viewport, wait, auth, cookies, 
                 page.wait_for_timeout(int(wait * 1000))
                 font_errors = wait_for_fonts(page, timeout_ms=10000)
                 if font_errors:
-                    entry["font_errors"] = font_errors
+                    # Cap at 20 entries so a page with many failing fonts doesn't
+                    # bloat manifest.json; a count field shows how many were truncated.
+                    entry["font_errors"] = font_errors[:20]
+                    if len(font_errors) > 20:
+                        entry["font_errors_truncated"] = len(font_errors) - 20
                 if settle == "networkidle":
                     try:
                         page.wait_for_load_state("networkidle", timeout=10000)
