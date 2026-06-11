@@ -243,12 +243,17 @@ def capture_env(label, base_url, paths, out_dir, viewport, wait, auth, cookies, 
                 r"(?:(?:^|[./])" + _re.escape(p) + ")"
                 for p in block_urls
             )
-            _block_re = _re.compile(combined, _re.IGNORECASE)
+            try:
+                _block_re = _re.compile(combined, _re.IGNORECASE)
+            except _re.error as exc:
+                print(f"  [block-urls] invalid pattern — skipping URL blocking: {exc}", file=sys.stderr, flush=True)
+                _block_re = None
 
-            def _block(route):
-                route.abort()
+            if _block_re:
+                def _block(route):
+                    route.abort()
 
-            context.route(_block_re, _block)
+                context.route(_block_re, _block)
 
         for path in paths:
             slug = slugify(path)
