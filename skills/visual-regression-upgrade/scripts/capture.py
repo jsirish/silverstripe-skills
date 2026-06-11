@@ -182,6 +182,8 @@ def wait_for_fonts(page, timeout_ms=10000):
     timing race this function exists to fix.
     """
     try:
+        # Pass an explicit Playwright-level timeout (JS race + 2s buffer) so that
+        # a crashed/unresponsive page context can't hang beyond the intended cap.
         result = page.evaluate(
             """async (timeoutMs) => {
                 const deadline = new Promise((resolve) =>
@@ -205,6 +207,7 @@ def wait_for_fonts(page, timeout_ms=10000):
                 return errors;
             }""",
             timeout_ms,
+            timeout=timeout_ms + 2000,
         )
         if result == 'timeout':
             print(f"  [font-wait] timed out after {timeout_ms}ms — fonts.ready did not resolve", file=sys.stderr, flush=True)
