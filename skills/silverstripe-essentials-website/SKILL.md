@@ -370,13 +370,13 @@ SS_DATABASE_CLASS="MySQLDatabase"
 
 ### 3. `ddev sake` requires project type `silverstripe`
 
-With `type: php` in `.ddev/config.yaml`, `ddev sake` is unavailable. Use the direct binary instead:
+Set `type: silverstripe` in `.ddev/config.yaml` to enable `ddev sake`. With `type: php` (the generic default), `ddev sake` is unavailable.
+
+As a one-off fallback before changing the project type:
 
 ```bash
 ddev exec 'vendor/bin/sake dev/build flush=1'
 ```
-
-Alternatively, set `type: silverstripe` in `.ddev/config.yaml` to re-enable `ddev sake`.
 
 ### 4. Version map corrections (recipe is authoritative)
 
@@ -384,8 +384,8 @@ The version map reference doc lists some packages at incorrect versions for SS6.
 
 | Package | Version map says | Actual pin (SS6) |
 |---------|-----------------|------------------|
-| `dynamic/essentials-theme` | `main` | `^2@dev` (branch `2`) |
-| `dynamic/elemental-templates` | `^6.0` | `^3@dev` |
+| `dynamic/silverstripe-essentials-theme` | `main` | `^2@dev` (branch `2`) |
+| `dynamic/silverstripe-elemental-templates` | `^6.0` | `^3@dev` |
 
 ### 5. TinyMCE is bundled in `silverstripe/admin` for SS6
 
@@ -398,10 +398,10 @@ Do not require `silverstripe/htmleditor-tinymce` — it is included inside `silv
 | `silverstripe/framework` | 6.2.0 |
 | `silverstripe/recipe-cms` | 6.2.0 |
 | `dnadesign/silverstripe-elemental` | 6.2.1 |
-| `dynamic/essentials-tools` | 3.0.3 |
-| `dynamic/essentials-theme` | 2.0.1 |
+| `dynamic/silverstripe-essentials-tools` | 3.0.3 |
+| `dynamic/silverstripe-essentials-theme` | 2.0.1 |
 | `dynamic/silverstripe-base-site` | 8.0.3 |
-| `dynamic/elemental-templates` | 3.0.2 |
+| `dynamic/silverstripe-elemental-templates` | 3.0.2 |
 
 ---
 
