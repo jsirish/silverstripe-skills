@@ -345,6 +345,66 @@ templates/
 
 ---
 
+## Silverstripe 6 Greenfield Setup
+
+The `dynamic/recipe-silverstripe-essentials-website` package has a full SS6 release line (`^3.0`, branch `3`). Several non-obvious gotchas apply to a greenfield SS6 install:
+
+### 1. Recipe is not on Packagist — use `--repository`
+
+`composer create-project` fails without an explicit VCS repository pointer. Run `ddev auth ssh` first so Composer can reach the private GitHub repo, then:
+
+```bash
+ddev auth ssh
+ddev composer create-project \
+  --repository='{"type":"vcs","url":"git@github.com:dynamic/recipe-silverstripe-essentials-website.git"}' \
+  dynamic/recipe-silverstripe-essentials-website . "^3.0"
+```
+
+### 2. `MySQLPDODatabase` does not exist in SS6
+
+SS6 ships only the `MySQLDatabase` connector. Using the SS5 class name causes `dev/build` to crash with `InjectorNotFoundException`. Ensure your `.env` sets:
+
+```
+SS_DATABASE_CLASS="MySQLDatabase"
+```
+
+### 3. `ddev sake` requires project type `silverstripe`
+
+With `type: php` in `.ddev/config.yaml`, `ddev sake` is unavailable. Use the direct binary instead:
+
+```bash
+ddev exec 'vendor/bin/sake dev/build flush=1'
+```
+
+Alternatively, set `type: silverstripe` in `.ddev/config.yaml` to re-enable `ddev sake`.
+
+### 4. Version map corrections (recipe is authoritative)
+
+The version map reference doc lists some packages at incorrect versions for SS6. The recipe pins are authoritative — do not manually require individual elemental modules, as the recipe resolves them transitively.
+
+| Package | Version map says | Actual pin (SS6) |
+|---------|-----------------|------------------|
+| `dynamic/essentials-theme` | `main` | `^2@dev` (branch `2`) |
+| `dynamic/elemental-templates` | `^6.0` | `^3@dev` |
+
+### 5. TinyMCE is bundled in `silverstripe/admin` for SS6
+
+Do not require `silverstripe/htmleditor-tinymce` — it is included inside `silverstripe/admin` and adding it as an explicit dependency causes conflicts.
+
+### Confirmed working versions (SS6)
+
+| Package | Version |
+|---------|---------|
+| `silverstripe/framework` | 6.2.0 |
+| `silverstripe/recipe-cms` | 6.2.0 |
+| `dnadesign/silverstripe-elemental` | 6.2.1 |
+| `dynamic/essentials-tools` | 3.0.3 |
+| `dynamic/essentials-theme` | 2.0.1 |
+| `dynamic/silverstripe-base-site` | 8.0.3 |
+| `dynamic/elemental-templates` | 3.0.2 |
+
+---
+
 ## New Essentials Project Setup
 
 Quick checklist for bootstrapping a new Essentials site:
