@@ -31,7 +31,7 @@ are run on UAT and production during the actual deploy.
 
 ### 1. Sync the production database
 
-Run the **`ddev-sync`** skill (`/silverstripe-skills:ddev-sync`). It starts
+Run the **`ddev-sync`** skill (`/workflow-skills:ddev-sync`). It starts
 DDEV, `composer install`s, authorises SSH, and pulls the production DB + assets
 via `sync.sh`.
 
