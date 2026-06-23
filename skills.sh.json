@@ -10,8 +10,7 @@
         "silverstripe-version-upgrade",
         "block-to-element-migration",
         "ss5-data-migration",
-        "ss6-data-migration",
-        "visual-regression-upgrade"
+        "ss6-data-migration"
       ]
     },
     {
@@ -30,8 +29,6 @@
       "title": "Dev Environment & Deployment",
       "description": "Local dev, syncing, and deployment workflows",
       "skills": [
-        "ddev-sync",
-        "server-sync-deploy",
         "dynamic-base-site"
       ]
     }
