@@ -6,12 +6,17 @@
 |---------|-------------|
 | `dynamic/recipe-silverstripe-base-site` | ^6.0 |
 | `dynamic/silverstripe-elemental-accordion` | ^6.0 |
-| `dynamic/silverstripe-elemental-blog` | ^4.0 |
+| `dynamic/silverstripe-elemental-blog` | ^4@dev ✓ |
+| `dynamic/silverstripe-elemental-call-to-action` | ^3@dev |
+| `dynamic/silverstripe-elemental-card` | ^3@dev |
 | `dynamic/silverstripe-elemental-customer-service` | ^4.0 |
 | `dynamic/silverstripe-elemental-embedded-code` | ^4.0 |
 | `dynamic/silverstripe-elemental-features` | ^6.0 |
 | `dynamic/silverstripe-elemental-filelist` | ^4.0 |
-| `dynamic/silverstripe-elemental-image` | ^4.0 |
+| `dynamic/silverstripe-elemental-gallery` | ^6@dev |
+| `dynamic/silverstripe-elemental-image` | ^4@dev ✓ |
+| `dynamic/silverstripe-elemental-links` | ^6@dev |
+| `dynamic/silverstripe-elemental-oembed` | ^6@dev |
 | `dynamic/silverstripe-elemental-promos` | ^6.0 |
 | `dynamic/silverstripe-elemental-sponsors` | ^5.0 |
 | `dynamic/silverstripe-elemental-timeline` | ^5.0 |
@@ -30,13 +35,13 @@
 | `dynamic/silverstripe-locator` | ^6.0 | |
 | `dynamic/silverstripe-site-notifications` | ^3.0 | |
 | `dynamic/recipe-silverstripe-essentials-website` | ^3.0 | 3 |
-| `dynamic/recipe-silverstripe-essentials-fixtures` | ^3.0 | 3 |
+| `dynamic/silverstripe-essentials-theme` | ^2.0 | 2 |
 | `dynamic/silverstripe-essentials-tools` | ^3.0 | 3 |
-| `dynamic/silverstripe-essentials-theme` | main | main |
+| `dynamic/recipe-silverstripe-essentials-fixtures` | ^3.0 | 3 |
 | `dynamic/silverstripe-elemental-baseobject` | ^6.0 | 6 |
 | `dynamic/silverstripe-elemental-templates` | ^6.0 | 6 |
 | `dynamic/silverstripe-base-site` | ^8.0 | 8 |
-| `dynamic/silverstripe-carousel` | main | main |
+| `dynamic/silverstripe-carousel` | ^3.0 | 3 |
 | `dynamic/silverstripe-svg-image` | main | main |
 | `dynamic/silverstripe-bootstrap-forms` | main | main |
 | `dynamic/silverstripe-thereisnouserform` | main | main |
@@ -64,6 +69,7 @@
 | `lekoala/silverstripe-debugbar` | None (remove) |
 | `sheadawson/silverstripe-linkable` | `silverstripe/linkfield` ^4.0 |
 | `nathancox/embedfield` | `fromholdio/silverstripe-embedfield` ^5.1 |
+| `nswdpc/silverstripe-thereisnouserform` | Removed from SS6 recipe. Projects that registered `UserDefinedFormPageExtension` on `HomePage`, `CampaignLandingPage`, or `SearchPage` in `app/_config/essentials.yml` will get a fatal `InvalidArgumentException` in `dev/build`. Fix: remove those extension entries from `app/_config/essentials.yml`. |
 | `undefinedoffset/silverstripe-nocaptcha` | None (remove) |
 
 ---
@@ -113,3 +119,46 @@ When using LinkField in templates, use explicit sort syntax:
 | PHP minimum | 8.1 → 8.3 |
 | TinyMCE | Updated to version 7 |
 | DDEV socket path | `/var/run/mysqld/mysqld.sock` (new in SS6 Docker images) |
+
+---
+
+## Upgrade Notes
+
+### Recipe-first consumption pattern
+
+Only one root constraint is needed when consuming the Dynamic Essentials ecosystem:
+
+```
+"dynamic/recipe-silverstripe-essentials-website": "^3@dev"
+```
+
+The recipe's `@dev` constraints cascade the entire tree automatically. Individual module constraints (`silverstripe-essentials-tools`, `silverstripe-essentials-theme`, etc.) are only needed if forcing source install via `preferred-install: dynamic/*: source`.
+
+### `silverstripe/vendor-plugin` bump required for SS6
+
+SS6 Dynamic modules require `silverstripe/vendor-plugin ^3`. If the project root pins `^2.0` (the SS5 default), Composer will conflict. Apply this before running `composer update`:
+
+```bash
+ddev composer require silverstripe/vendor-plugin:^3 --no-update
+```
+
+### `silverstripeltd/betamask` is an SS6 blocker
+
+`silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Remove it before running `composer update` — no SS6 release exists as of June 2026:
+
+```bash
+ddev composer remove silverstripeltd/betamask
+```
+
+### `nathancox/embedfield` → `fromholdio` handled upstream
+
+`dynamic/silverstripe-elemental-oembed@6` already swaps `nathancox/embedfield` for `fromholdio/silverstripe-embedfield ^5.1`. Projects only need to remap fixture class references:
+
+- Old: `nathancox\EmbedField\Model\EmbedObject`
+- New: `Fromholdio\EmbedField\Model\EmbedObject`
+
+Applies to: `element-fixtures.yml`, `element-template-defaults.yml`, `site-demo-content.yml`, `fixtures-populate.yml`.
+
+### `dynamic/silverstripe-slickplan-importer` SS6-ready on `main`
+
+The `main` branch already requires `framework ^6` and `cms ^6`. No branch change needed.
