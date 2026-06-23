@@ -42,6 +42,22 @@ parameters:
 
 `cambis/silverstan ^2.1` is the companion PHPStan tool for SS6 — already in the dev dependencies list above.
 
+#### PHPStan vendor path issue
+
+> [!WARNING]
+> If vendor code introduces non-ignorable PHPStan errors (e.g. `method.childReturnType` — these cannot be baselined: PHPStan always re-reports them regardless of baseline entries), the fix is to exclude vendor paths from `phpstan.neon` paths. Only scan `app/src` and `app/tests`:
+>
+> ```neon
+> parameters:
+>   level: 1
+>   treatPhpDocTypesAsCertain: false
+>   paths:
+>     - app/src
+>     - app/tests
+> ```
+>
+> Do NOT include `vendor/` or module subdirectories in `paths` — vendor code quality is the upstream module's responsibility. File a bug in the upstream repo (e.g. `dynamic/silverstripe-essentials-tools`) and track it there. Never add `vendor/` to `paths` in a project-level `phpstan.neon`.
+
 #### Known annoyance: ideannotator vs PHPStan
 
 > [!WARNING]

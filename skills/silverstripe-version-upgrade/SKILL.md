@@ -137,6 +137,22 @@ ddev composer update --with-all-dependencies
 ddev composer vendor-expose
 ```
 
+> **Recipe-first:** When consuming the Dynamic Essentials ecosystem, require only the root recipe:
+> `ddev composer require dynamic/recipe-silverstripe-essentials-website:^3@dev`
+> The recipe's `@dev` constraints cascade the entire tree automatically. Individual module
+> constraints are only needed if forcing source install via `preferred-install: dynamic/*: source`.
+
+> **`silverstripe/vendor-plugin` bump:** SS6 Dynamic modules require `^3`. If the project root pins `^2.0` (SS5 default), Composer will conflict. Apply before running `composer update`:
+> ```bash
+> ddev composer require silverstripe/vendor-plugin:^3 --no-update
+> ```
+
+> [!WARNING]
+> **SS6 blocker — `silverstripeltd/betamask`:** `silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Remove it before running `composer update`. No SS6 release exists as of June 2026.
+> ```bash
+> ddev composer remove silverstripeltd/betamask
+> ```
+
 ## Phase 4: Configuration Migration
 
 Key areas:
@@ -346,6 +362,8 @@ See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill
 ## Phase 7: Code Quality
 
 See [references/code-quality.md](references/code-quality.md) for PHPCS/PHPStan steps.
+
+> **PHPStan vendor path:** Only scan `app/src` and `app/tests` — never include `vendor/` in `phpstan.neon` `paths`. Vendor errors such as `method.childReturnType` cannot be baselined (PHPStan re-reports them regardless). File upstream bugs in the relevant module repo. Full details in [references/code-quality.md](references/code-quality.md).
 
 ## Phase 8: Commit & PR
 
