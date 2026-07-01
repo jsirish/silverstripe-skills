@@ -165,10 +165,10 @@ Dynamic\Elements\Accordion\Model\AccordionPanel:
 # StatCounters → StatCounter
 Dynamic\Elements\StatCounters\Model\StatCounter:
   stat1:
-    Title: '500+'
-    Label: 'Projects Completed'
-    Statistic: '500'
+    Title: 'Projects Completed' # descriptor (small caption)
+    Statistic: '500' # the number/word, renders large
     StatType: 'Int'  # or 'Percentage'
+    # Label left empty - reserve it for a short unit ('%', 'wks'), never the descriptor (see gotcha below)
     ElementStatCounters: =>Dynamic\Elements\StatCounters\Elements\ElementStatCounters.myStats
 
 # Links → LinkListObject
@@ -310,6 +310,9 @@ SilverStripe\Assets\Image:
 
 > [!WARNING]
 > **ElementCallToAction (`ContentAlign`)**: Omission of the `ContentAlign` field inside an `ElementCallToAction` fixture will cause severe PHP 8.x null-to-string deprecation warnings that crash layout rendering upstream. Always forcefully populate `ContentAlign` (e.g. `'Center'`, `'Left'`, `'Right'`).
+
+> [!WARNING]
+> **StatCounter field roles + sizing**: `Label` is `Varchar(20)` and renders at the SAME large size as `Statistic` - it is for a short unit (`'%'`, `'wks'`), never the descriptor. Put the number/word in `Statistic`, the descriptor in `Title` (small caption), and leave `Label` empty unless you have a real short unit. Putting a long descriptor in `Label` overflows the stat box - this caused a real production bug ("stat counters too big") on a live client build.
 
 ---
 
