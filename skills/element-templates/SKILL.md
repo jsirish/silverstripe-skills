@@ -167,8 +167,8 @@ Dynamic\Elements\StatCounters\Model\StatCounter:
   stat1:
     Title: 'Projects Completed' # descriptor (small caption)
     Statistic: '500' # the number/word, renders large
+    Label: '+' # optional short unit/suffix, renders large next to Statistic (e.g. '+', '%', 'wks') - never the descriptor
     StatType: 'Int'  # or 'Percentage'
-    # Label left empty - reserve it for a short unit ('%', 'wks'), never the descriptor (see gotcha below)
     ElementStatCounters: =>Dynamic\Elements\StatCounters\Elements\ElementStatCounters.myStats
 
 # Links → LinkListObject
