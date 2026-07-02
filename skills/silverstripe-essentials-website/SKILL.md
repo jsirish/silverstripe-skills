@@ -36,7 +36,7 @@ Three dev-channel packages are typically pulled from private VCS repos:
 | Site tools | `Dynamic\SiteTools\Extension\*` (HeaderImageExtension, PreviewExtension, ContactDataExtension) |
 | Essentials tools | `Dynamic\Essentials\*` (Extensions, Elements, Models, Admin) |
 | Essentials services | `Dynamic\SilverStripeEssentialsTools\Service\*` (ColorConfigurationProvider) |
-| Elemental modules | `Dynamic\Elements\{ModuleName}\Elements\*` (exceptions: Testimonials uses `Dynamic\Elements\Elements\*`, Embedded Code uses `Dynamic\Elements\Embedded\Elements\*`) |
+| Elemental modules | `Dynamic\Elements\{ModuleName}\Elements\*` (exceptions: Testimonials uses `Dynamic\Elements\Elements\*`, Embedded Code uses `Dynamic\Elements\Embedded\Elements\*`, Call to Action uses the `CTA` segment) |
 
 ## Elemental Blocks (20+ Types)
 
