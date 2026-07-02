@@ -59,6 +59,24 @@ does not update existing records.
 Re-run with the affected Element classes in
 [`truncate_objects`](./configuration.md#truncate_objects); never against real content.
 
+### 8. Many-Many Join Rows Point at Phantom IDs After Re-run
+**Symptom:** Blocks that depend on many-many relations (testimonials via category, sponsors)
+render empty or wrong after re-running `PopulateTask` over an already-populated DB, even though
+the run reported success. The join rows exist but reference record IDs that do not exist.
+**Cause:** Re-running populate can write many-many join rows with phantom IDs. This is the known
+populate v4 ID-registration issue that `AppPopulateFactory` only partially covers. A fresh single
+populate links correctly.
+**Fix:** When verifying many-many-dependent blocks, test on a clean populate rather than a re-run,
+or confirm the join rows resolve to real IDs:
+```bash
+# Example: element-to-category join rows with no matching category record
+ddev mysql -e "SELECT j.* FROM ElementTestimonials_TestimonialCategories j
+               LEFT JOIN TestimonialCategory c ON j.TestimonialCategoryID = c.ID
+               WHERE c.ID IS NULL;"
+```
+Any rows returned are phantom links: rebuild from a clean populate (see
+[truncate_objects](./configuration.md#truncate_objects), never against real content).
+
 ## Known Vendor Bug
 <a id="known-vendor-bug"></a>
 **Issue:** `dnadesign/silverstripe-populate` bug in `populateFile()` returns `true` instead of the File object when hashes match.
