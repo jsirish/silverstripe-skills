@@ -147,9 +147,31 @@ ddev sake dev/build flush=1
 
 In the CMS: open a migrated page, confirm elements appear, edit one, save, **publish** — confirm the page still renders on the frontend. (Missing `_Versions` rows cause this to silently strip the element from `_Live`.)
 
-### Phase 6 — Visual parity verification
+**Evidence gate (Phase 5):** paste the source-vs-target row counts before declaring the data half done:
 
-Walk the [references/verification-checklist.md](references/verification-checklist.md): for each page type that uses a migrated element, curl prod and local, strip dynamic bits, diff. Pass = only asset-host differences remain.
+```sql
+SELECT COUNT(*) FROM Block WHERE ClassName NOT IN (<skip-classes>);  -- source
+SELECT COUNT(*) FROM Element;                                        -- draft
+SELECT COUNT(*) FROM Element_Live;                                   -- live
+SELECT COUNT(*) FROM Element_Versions;                               -- versions
+```
+
+Source and draft counts match (minus named skips), live matches draft for published pages, and versions >= draft. Repeat for each child sub-object table (PromoItems, gallery items).
+
+### Phase 6 — Visual parity verification (required gate)
+
+Walk **every item** in [references/verification-checklist.md](references/verification-checklist.md): for each page type that uses a migrated element, curl prod and local, strip dynamic bits, diff. Pass = only asset-host differences remain.
+
+This checklist is the exit gate for the migration, not an optional reference. The migration is not done until each checklist item has pasted command output showing it passed. A migration that skips this phase is the classic half-done failure described at the top of this skill: CMS populated, frontend broken.
+
+## Do not rationalize
+
+| Rationalization | Required behavior |
+|-----------------|-------------------|
+| "The task reported success, so the data is right" | Paste the Phase 5 draft/live/versions count queries. Explicit-ID child inserts collide silently and still report success. |
+| "The element shows in the CMS, so publish works" | Do the edit-save-publish round trip and confirm the frontend still renders. Missing `_Versions` rows only surface on publish. |
+| "The templates look the same" | Run the Phase 6 curl-and-diff per page type and paste the diff summary. Eyeballing misses wrapper-class and nesting changes that break CSS. |
+| "The verification checklist is optional" | It is the Phase 6 exit gate. Every item passes with pasted output, or the migration is not done. |
 
 ---
 
@@ -184,7 +206,7 @@ Walk the [references/verification-checklist.md](references/verification-checklis
 - [references/template-parity-pattern.md](references/template-parity-pattern.md) — duplicating templates with variable swaps
 - [references/area-suffix-templates.md](references/area-suffix-templates.md) — the `Element_RelationName.ss` mechanism
 - [references/dynamic-blocks-migrator-alternative.md](references/dynamic-blocks-migrator-alternative.md) — YAML-configured alternative module
-- [references/verification-checklist.md](references/verification-checklist.md) — pre-merge visual parity checks
+- [references/verification-checklist.md](references/verification-checklist.md) — pre-merge visual parity checks (the required Phase 6 exit gate)
 - [examples/](examples/) — worked example task, YAML config, and template diff
 - Sibling skill: [silverstripe-3-to-4-upgrade](../silverstripe-3-to-4-upgrade/SKILL.md) — the broader upgrade workflow
 - [silverstripe-3-to-4-upgrade/references/page-layout-parity.md](../silverstripe-3-to-4-upgrade/references/page-layout-parity.md) — page-level markup parity (margin-collapse wrappers, WidgetHolder, SectionNav, MenuTitle) — the same "preserve the markup exactly" rule applied at the layout-template level

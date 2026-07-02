@@ -24,6 +24,19 @@ Repeatable workflow for upgrading Silverstripe CMS projects (e.g. SS4 → SS5) i
 | **9. UAT** | Deploy, run tasks, verify, troubleshoot |
 | **10. Production** | Merge, deploy, run tasks, verify |
 
+## Do not rationalize
+
+Every phase gate below requires evidence: the actual command output, not a recollection or an inference. "Seems right" is insufficient. The shortcuts agents talk themselves into, and the required counter-behavior:
+
+| Rationalization | Required behavior |
+|-----------------|-------------------|
+| "The build passed, so the migration ran" | Run each migration task and paste its output, including row counts. `dev/build` succeeding proves nothing about task execution. |
+| "The vendor diff looks fine" | Run `ddev composer validate` and `ddev composer show --direct`, paste the output. Eyeballing `composer.lock` is not validation. |
+| "Tests probably still pass" | Run the suite (`ddev exec vendor/bin/phpunit`) and paste the summary line. No run, no claim. |
+| "The homepage loads, so the site works" | Curl one URL per page type and paste the HTTP codes (see Phase 6 and 10.4). One page proves one template. |
+| "dev/build ran without errors, so the schema is correct" | Paste the build output showing the table and field changes you expected. A silent build can mean silently ignored config (see `classname_value_remapping`). |
+| "That warning is probably pre-existing" | Grep the pre-upgrade branch for the same warning and paste both results. Confirmed pre-existing or it is yours. |
+
 ## Phase 1: Assessment & Discovery
 
 ### 1.1 Pre-Flight
@@ -152,6 +165,15 @@ ddev composer vendor-expose
 > ```bash
 > ddev composer remove silverstripeltd/betamask
 > ```
+
+**Evidence gate (Phase 3):** before moving to config migration, paste the output of:
+
+```bash
+ddev composer validate
+ddev composer show --direct   # confirm expected major versions resolved
+```
+
+A clean `composer update` exit code is not the gate; the resolved version list is.
 
 ## Phase 4: Configuration Migration
 
@@ -289,6 +311,19 @@ After correcting the key, a single `dev/build flush=1` migrates all affected row
 
 See [references/data-migration-tasks.md](references/data-migration-tasks.md) for the BuildTask pattern, migration principles, and common scenarios (Linkable → Link, ManyMany → LinkField).
 
+**Evidence gate (Phase 5):** a migration step is done when you can paste, for each task:
+1. The task's own output (migrated / skipped / broken counts).
+2. A row-count query against the target tables, compared to the source count:
+
+```sql
+SELECT COUNT(*) FROM <SourceTable>;                -- before
+SELECT COUNT(*) FROM <TargetTable>;                -- after
+SELECT COUNT(*) FROM <TargetTable>_Live;           -- if versioned
+SELECT COUNT(*) FROM <TargetTable>_Versions;
+```
+
+Counts must match, or every row of the delta must be accounted for (skipped classes, intentional exclusions). "The task finished without errors" is not the gate.
+
 ## Phase 6: Build & Verify
 
 ```bash
@@ -297,6 +332,14 @@ ddev sake dev/tasks/<task-segment>
 ```
 
 Verify: Homepage, carousel, navigation, footer, CMS admin, elemental blocks.
+
+**Evidence gate (Phase 6):** paste the `dev/build` output (expected table/field changes present, no obsolete-type warnings you cannot explain) and the HTTP status of one URL per page type:
+
+```bash
+for u in / /<page-type-urls>; do
+  curl -s -o /dev/null -w "%{http_code}  $u\n" "https://{project}.ddev.site$u"
+done
+```
 
 ### Visual regression (optional but recommended)
 
@@ -364,6 +407,8 @@ See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill
 See [references/code-quality.md](references/code-quality.md) for PHPCS/PHPStan steps.
 
 > **PHPStan vendor path:** Only scan `app/src` and `app/tests` — never include `vendor/` in `phpstan.neon` `paths`. Vendor errors such as `method.childReturnType` cannot be baselined (PHPStan re-reports them regardless). File upstream bugs in the relevant module repo. Full details in [references/code-quality.md](references/code-quality.md).
+
+**Evidence gate (Phase 7):** paste the summary line of each tool run (PHPUnit test/assertion counts, PHPCS error count, PHPStan error count). "Probably still passes" does not clear this gate; only a run in this working tree does.
 
 ## Phase 8: Commit & PR
 

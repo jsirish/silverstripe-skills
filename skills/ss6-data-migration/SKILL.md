@@ -27,6 +27,17 @@ are run on UAT and production during the actual deploy.
 - On branch `feature/ss6-upgrade` (the SS6 code).
 - DDEV running, SSH keys available for the production sync.
 
+## Do not rationalize
+
+Each step's gate is pasted command output, not a recollection of a previous run.
+
+| Rationalization | Required behavior |
+|-----------------|-------------------|
+| "No errors printed, so the migration worked" | Paste the task's migrated/broken counts and the verification queries in step 3a. |
+| "Row count looks close enough" | Source and target counts must match exactly, or each missing link is identified. The task drops the source table on success, so capture the source count **before** running. |
+| "It worked on the last sync" | This is a one-shot task on a fresh sync. Paste this run's output; the previous run proves nothing about this database. |
+| "The homepage loads, so the migration is verified" | Run the full page sweep in step 4 and paste the local/production status table. |
+
 ## Workflow
 
 ### 1. Sync the production database
@@ -82,8 +93,28 @@ Migrates every `sheadawson/linkable` link (`LinkableLink` table) to
 - **Expected result:** `23 links migrated, 0 broken links` (counts will track
   production content over time).
 
+**Verification (required):** capture the source count before the task runs (the
+task drops `LinkableLink` on success), then compare after:
+
+```bash
+# BEFORE the task
+ddev mysql -e "SELECT COUNT(*) FROM LinkableLink;"
+
+# AFTER the task: draft, live, versions
+ddev mysql -e "SELECT COUNT(*) FROM LinkField_Link;
+               SELECT COUNT(*) FROM LinkField_Link_Live;
+               SELECT COUNT(*) FROM LinkField_Link_Versions;"
+```
+
+The step is done when the pasted output shows source count = draft count =
+live count (the task publishes all links), `_Versions` >= draft count, and the
+task reported `0 broken links`. Any delta gets explained link by link before
+moving on.
+
 > Add a new `### 3x` subsection here for any future SS6 migration task, so this
-> skill always lists one step per migration required.
+> skill always lists one step per migration required. Every new subsection gets
+> its own **Verification (required)** block with before/after row-count queries,
+> matching the 3a pattern.
 
 ### 4. Verify against production
 

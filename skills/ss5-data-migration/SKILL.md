@@ -84,6 +84,32 @@ ddev sake dev/tasks/NavigationMigrationTask "flush=1"
 > For an SS4→SS5 migration the same structure applies — drop the SS3→SS4 ClassName-remapping
 > rows and keep the environments / expected-outputs / verification sections.
 
+## Do not rationalize
+
+A migration step is not done until you have pasted the task output and the verification query results. The actual output, not a recollection.
+
+| Rationalization | Required behavior |
+|-----------------|-------------------|
+| "No errors printed, so it worked" | Paste the task's migrated/skipped counts and the row-count queries below. Silence is not success; many tasks fail quietly on empty source tables. |
+| "Row count looks close enough" | Counts match exactly or every missing row is named (skipped class, intentional exclusion). Paste the delta explanation. |
+| "The page renders, so live data is fine" | Query `_Live` and `_Versions` directly. Draft-only rows render in the CMS preview and silently vanish on publish. |
+| "It ran on the last sync, so it will run on this one" | Re-run and paste this run's output. Fresh syncs reset source data; the previous run proves nothing. |
+
+## Per-task verification (required)
+
+After **each** task in the workflow below, before declaring the step done, run and paste:
+
+```sql
+-- Adjust table names per task; the shape is always draft vs live vs versions
+SELECT COUNT(*) FROM Element;
+SELECT COUNT(*) FROM Element_Live;
+SELECT COUNT(*) FROM Element_Versions;
+-- Plus the task-specific target, e.g.:
+SELECT COUNT(*) FROM LinkField_Link;
+```
+
+Draft and `_Live` counts must match for published content, and `_Versions` must be at least the draft count. Record the counts in the project's `/migrate` runbook under "Expected outputs" so the next run has a baseline to compare against.
+
 ## Migration Workflow
 
 The migration tasks must be run in the following sequence to guarantee data integrity.
@@ -125,6 +151,10 @@ its `migrate.sh` runner. A `.agent/workflows/data-migration.md` workflow file wi
 command is the canonical, better-documented form. Whichever you use, ensure each command exits
 successfully before proceeding to the next, and keep these tasks **out of** `devbuild.sh`
 (which is cache-rebuild-only).
+
+An automated run still owes the [per-task verification](#per-task-verification-required)
+evidence: capture each task's output and the row-count queries in the run log. Exit code 0
+alone does not clear the gate.
 
 ## Deployment Strategy
 
