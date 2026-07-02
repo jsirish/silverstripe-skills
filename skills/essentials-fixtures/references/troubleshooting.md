@@ -64,7 +64,7 @@ Re-run with the affected Element classes in
 render empty or wrong after re-running `PopulateTask` over an already-populated DB, even though
 the run reported success. The join rows exist but reference record IDs that do not exist.
 **Cause:** Re-running populate can write many-many join rows with phantom IDs. This is the known
-populate v4 ID-registration issue that `AppPopulateFactory` only partially covers. A fresh single
+populate v4 ID-registration issue that a project-level `PopulateFactory` override can only partially cover. A fresh single
 populate links correctly.
 **Fix:** When verifying many-many-dependent blocks, test on a clean populate rather than a re-run,
 or confirm the join rows resolve to real IDs:
