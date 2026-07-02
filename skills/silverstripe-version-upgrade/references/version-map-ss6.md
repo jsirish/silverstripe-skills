@@ -57,17 +57,19 @@
 | `innoweb/silverstripe-page-icons` | ^4.0 |
 | `innoweb/silverstripe-social-metadata` | ^9.0 |
 | `jonom/focuspoint` | ^6.0 |
-| `silverstripe/linkfield` | ^4.0 |
+| `silverstripe/linkfield` | ^5.0 [^2] |
 | `fromholdio/silverstripe-embedfield` | ^5.1 |
 
 [^1]: `silverstripe/recipe-cms ^6.0` is the Composer constraint. The recipe branch for SS6 is `3` (recipe-cms 3.x tracks CMS 6.x). This follows the same pattern as SS5 where recipe-cms `^5.0` corresponded to branch `2`.
+
+[^2]: The linkfield 4.x line requires cms ^5 and cannot resolve against cms ^6; the SS6 line is 5.x. Run the linkable data migration on SS5 with linkfield `^4` BEFORE the SS6 bump.
 
 ### Removed / Replaced Packages (No SS6 Version)
 
 | Package | Replacement |
 |---------|-------------|
 | `lekoala/silverstripe-debugbar` | None (remove) |
-| `sheadawson/silverstripe-linkable` | `silverstripe/linkfield` ^4.0 |
+| `sheadawson/silverstripe-linkable` | `silverstripe/linkfield` (`^5` on SS6; run the linkable data migration on SS5 with linkfield `^4` BEFORE the SS6 bump) |
 | `nathancox/embedfield` | `fromholdio/silverstripe-embedfield` ^5.1 |
 | `nswdpc/silverstripe-thereisnouserform` | Removed from SS6 recipe. Projects that registered `UserDefinedFormPageExtension` on `HomePage`, `CampaignLandingPage`, or `SearchPage` in `app/_config/essentials.yml` will get a fatal `InvalidArgumentException` in `dev/build`. Fix: remove those extension entries from `app/_config/essentials.yml`. |
 | `undefinedoffset/silverstripe-nocaptcha` | None (remove) |
