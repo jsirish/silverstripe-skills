@@ -13,9 +13,9 @@ Repeatable workflow for upgrading a **single Silverstripe module** (a `silverstr
 > - [ss6-data-migration](../ss6-data-migration/SKILL.md): **DB content** migration after a project upgrade.
 > - This skill: the **module** loop (constraints, code sweep, CI, tag, default branch).
 >
-> Branch-naming and default-branch conventions come from [ss-branch-strategy](../ss-branch-strategy/SKILL.md) (from `jsirish/workflow-skills`); this skill applies that convention, it does not redefine it.
+> Branch-naming and default-branch conventions come from [ss-branch-strategy](https://github.com/jsirish/workflow-skills/tree/main/skills/ss-branch-strategy) (from `jsirish/workflow-skills`); this skill applies that convention, it does not redefine it.
 
-Reference implementation: [dynamic/silverstripe-calendar#112](https://github.com/dynamic/silverstripe-calendar/issues/112) (branch `2` to `3`, tagged `3.0.0`).
+Reference implementation for Phases 1-4 and 7: [dynamic/silverstripe-calendar#112](https://github.com/dynamic/silverstripe-calendar/issues/112) (branch `2` to `3`, tagged `3.0.0`). Its branch `3` does NOT yet demonstrate Phases 3.4/6 (recipe-testing still `^3`, PHPUnit 9 config, no CI run recorded); treat those phases as prescriptive, not descriptive.
 
 ## Upgrade Phases (Summary)
 
@@ -66,13 +66,13 @@ gh api repos/<vendor>/<module>/branches --jq '.[].name'
 cat composer.json | python3 -c "import json,sys; print(json.load(sys.stdin)['require'])"
 ```
 
-For each third-party requirement, confirm an SS6-compatible release exists on Packagist. If one does not, follow the fork-and-upstream workflow in [ss-branch-strategy](../ss-branch-strategy/SKILL.md) or find a maintained replacement (see 3.3).
+For each third-party requirement, confirm an SS6-compatible release exists on Packagist. If one does not, follow the fork-and-upstream workflow in [ss-branch-strategy](https://github.com/jsirish/workflow-skills/tree/main/skills/ss-branch-strategy) or find a maintained replacement (see 3.3).
 
 **Evidence gate (Phase 1):** a written ordering position ("leaf", "mid-tier after X", "recipe") and, for every requirement, either the SS6-compatible version number or the replacement/fork decision. Paste the requirement list with the target version beside each entry.
 
 ## Phase 2: Branch Setup
 
-Integer branch naming per [ss-branch-strategy](../ss-branch-strategy/SKILL.md): the new branch integer is the module's **next major version** (or the recipe version, if the repo versions against a shared recipe). Example: `dynamic/silverstripe-calendar` was on `2` (SS5), so SS6 work went to `3`.
+Integer branch naming per [ss-branch-strategy](https://github.com/jsirish/workflow-skills/tree/main/skills/ss-branch-strategy): the new branch integer is the module's **next major version** (or the recipe version, if the repo versions against a shared recipe). Example: `dynamic/silverstripe-calendar` was on `2` (SS5), so SS6 work went to `3`.
 
 ```bash
 # Create the new integer branch from the current SS5 default
@@ -120,18 +120,18 @@ Observed across the `dynamic/*` SS6 sweep (verify each on Packagist rather than 
 | `symbiote/silverstripe-gridfieldextensions` | `^5` |
 | `symbiote/silverstripe-queuedjobs` | `^6` |
 | `unclecheese/display-logic` | `^4` |
-| `silverstripe/linkfield` | `^4` |
+| `silverstripe/linkfield` | `^5` (the 4.x line is CMS 5 only and cannot resolve against `cms ^6`) |
 | `silverstripe/vendor-plugin` (if pinned) | `^3` |
 
 ### 3.3 Replacements for packages with no SS6 release
 
 | Package | Replacement |
 |---------|-------------|
-| `ryanpotter/silverstripe-color-field` | `tractorcow/silverstripe-colorpicker` |
+| `ryanpotter/silverstripe-color-field` | `tractorcow/silverstripe-colorpicker` (no tagged SS6 release yet; require `"dev-master as 5.0"` inline alias) |
 | `nathancox/embedfield` | `fromholdio/silverstripe-embedfield ^5.1` |
-| `sheadawson/silverstripe-linkable` | `silverstripe/linkfield ^4` |
+| `sheadawson/silverstripe-linkable` | `silverstripe/linkfield` (`^5` on SS6; run the linkable data migration on SS5 with linkfield `^4` BEFORE the SS6 bump) |
 
-The full project-level removal list lives in [silverstripe-version-upgrade references/version-map-ss6.md](../silverstripe-version-upgrade/references/version-map-ss6.md).
+The project-level removal list (this table is a module-focused superset) lives in [silverstripe-version-upgrade references/version-map-ss6.md](../silverstripe-version-upgrade/references/version-map-ss6.md).
 
 ### 3.4 Dev dependencies
 
@@ -212,9 +212,14 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+permissions: {}
 jobs:
   ci:
     name: CI
+    permissions:
+      pull-requests: read
+      contents: read
+      actions: write
     uses: silverstripe/gha-ci/.github/workflows/ci.yml@v1
     with:
       phpcoverage: false
@@ -317,4 +322,4 @@ Then exercise the module:
 
 - [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md): the project-level SS6 upgrade this skill feeds into; canonical home of the SS6 rename tables, breaking changes, and version maps.
 - [ss6-data-migration](../ss6-data-migration/SKILL.md): DB content migration after the project upgrade.
-- [ss-branch-strategy](../ss-branch-strategy/SKILL.md) (from `jsirish/workflow-skills`): the integer-branch, default-branch, and fork-and-upstream conventions applied in Phases 2 and 7.
+- [ss-branch-strategy](https://github.com/jsirish/workflow-skills/tree/main/skills/ss-branch-strategy) (from `jsirish/workflow-skills`): the integer-branch, default-branch, and fork-and-upstream conventions applied in Phases 2 and 7.
