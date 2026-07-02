@@ -53,6 +53,8 @@ draft-only query silently misses records that exist only on the live stage
 (e.g. content published and then deleted from draft):
 
 ```php
+use SilverStripe\Versioned\Versioned;
+
 foreach ([Versioned::DRAFT, Versioned::LIVE] as $stage) {
     Versioned::withVersionedMode(function () use ($stage) {
         Versioned::set_stage($stage);
@@ -61,18 +63,23 @@ foreach ([Versioned::DRAFT, Versioned::LIVE] as $stage) {
 }
 ```
 
-### Publish with copyVersionToStage, not publishRecursive
+### Publishing migrated records: publishRecursive vs copyVersionToStage
 
-To publish a migrated record, copy the draft version directly to live:
+`publishRecursive()` is the default idiom for publishing migrated records
+(consistent with
+[silverstripe-version-upgrade/references/data-migration-tasks.md](../silverstripe-version-upgrade/references/data-migration-tasks.md)):
+it publishes the record plus everything it owns via `$owns`, which is what you
+want when the owned records (links, images) are migrated together.
+
+Reach for `copyVersionToStage()` when you need to publish **exactly one record
+without cascading**, e.g. its owned records are not migrated yet, or elemental
+ownership would cascade-publish drafts you did not intend to touch:
 
 ```php
+use SilverStripe\Versioned\Versioned;
+
 $record->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
 ```
-
-`publishRecursive()` walks the ownership chain, which is ambiguous mid-migration
-in SS6 (owners may not be migrated yet, and elemental ownership triggers cascade
-publishes you did not intend). `copyVersionToStage()` publishes exactly the one
-record.
 
 ## Workflow
 
@@ -107,9 +114,8 @@ ddev sake tasks | grep -i 'migrat\|conversion\|convert'
 
 Any BuildTask subclass in `app/src/Task/` whose name contains `Migration` or
 `Conversion` belongs in this run. Run **each** in order; each self-guards, but
-see the per-task notes. Give every task its own `### 3x` subsection below with
-its own **Verification (required)** block of before/after row-count queries,
-matching the 3a pattern.
+see the per-task notes. Every task gets its own `#### 3x` subsection with a
+**Verification (required)** block (see the note after 3a).
 
 #### 3a. Linkable to LinkField
 
@@ -154,7 +160,7 @@ live count (the task publishes all links), `_Versions` >= draft count, and the
 task reported `0 broken links`. Any delta gets explained link by link before
 moving on.
 
-> Add a new `### 3x` subsection here for any future SS6 migration task, so this
+> Add a new `#### 3x` subsection here for any future SS6 migration task, so this
 > skill always lists one step per migration required. Every new subsection gets
 > its own **Verification (required)** block with before/after row-count queries,
 > matching the 3a pattern.
@@ -242,8 +248,8 @@ delete the now-spent migration code: the task class in `app/src/Task/` and its
 ## Worked example: dynamicagency.com SS6 upgrade
 
 The workflow above was extracted from the dynamicagency.com SS5 to SS6 upgrade
-(installer PR #284). The concrete values used there, as a reference
-implementation:
+(PR #284 in the site's own installer repository; PR/issue numbers below refer
+to that repo). The concrete values used there, as a reference implementation:
 
 - **Branch:** `feature/ss6-upgrade`; local site `https://dynamicagency.ddev.site`,
   production `https://www.dynamicagency.com`.
@@ -259,11 +265,11 @@ implementation:
   (permanent, kept after cleanup).
 - **Expected result at time of writing:** `23 links migrated, 0 broken links`.
 - **Page sweep (step 4):** `/`, `/about/about-us`, `/web-content-media-dynamic`,
-  `/work/cedar-crest-ice-cream`, `/community/giving-back`,
+  `/work/{case-study}`, `/community/giving-back`,
   `/about/careers/open-positions`, `/about/news`.
 - **Spot check:** `/about/about-us` Single Feature link renders with
   `class="btn btn-primary btn-gradient"`.
 - **Cleanup targets:** `app/src/Task/LinkableMigrationTask.php` and
   `app/_config/linkfield-migration.yml`; the `LinkStyleExtension` and linkfield
   app-code changes are permanent.
-- The ideannotator docblock churn was tracked as installer issue #299.
+- The ideannotator docblock churn was tracked as issue #299 in the same repo.
