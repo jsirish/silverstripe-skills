@@ -36,7 +36,7 @@ Three dev-channel packages are typically pulled from private VCS repos:
 | Site tools | `Dynamic\SiteTools\Extension\*` (HeaderImageExtension, PreviewExtension, ContactDataExtension) |
 | Essentials tools | `Dynamic\Essentials\*` (Extensions, Elements, Models, Admin) |
 | Essentials services | `Dynamic\SilverStripeEssentialsTools\Service\*` (ColorConfigurationProvider) |
-| Elemental modules | `Dynamic\Elements\{ModuleName}\Elements\*` |
+| Elemental modules | `Dynamic\Elements\{ModuleName}\Elements\*` (exceptions: Testimonials uses `Dynamic\Elements\Elements\*`, Embedded Code uses `Dynamic\Elements\Embedded\Elements\*`, Call to Action uses the `CTA` segment) |
 
 ## Elemental Blocks (20+ Types)
 
@@ -51,17 +51,17 @@ Three dev-channel packages are typically pulled from private VCS repos:
 | Card | `Dynamic\Elements\Card\Elements\ElementCard` | `dynamic/silverstripe-elemental-card` |
 | Carousel | `Dynamic\Elements\Carousel\Elements\ElementCarousel` | `dynamic/silverstripe-elemental-carousel` |
 | Customer Service | `Dynamic\Elements\CustomerService\Elements\ElementCustomerService` | `dynamic/silverstripe-elemental-customer-service` |
-| Embedded Code | `Dynamic\Elements\EmbeddedCode\Elements\*` | `dynamic/silverstripe-elemental-embedded-code` |
+| Embedded Code | `Dynamic\Elements\Embedded\Elements\ElementEmbeddedCode` | `dynamic/silverstripe-elemental-embedded-code` |
 | Photo Gallery | `Dynamic\Elements\Gallery\Elements\*` | `dynamic/silverstripe-elemental-gallery` |
 | Image | `Dynamic\Elements\Image\Elements\*` | `dynamic/silverstripe-elemental-image` |
 | Links | `Dynamic\Elements\Links\Elements\*` | `dynamic/silverstripe-elemental-links` |
 | Media (oEmbed) | `Dynamic\Elements\Oembed\Elements\ElementOembed` | `dynamic/silverstripe-elemental-oembed` |
 | Sponsors | `Dynamic\Elements\Sponsors\Elements\ElementSponsor` | `dynamic/silverstripe-elemental-sponsors` |
-| Stat Counters | `Dynamic\Elements\StatCounters\Model\StatCounter` | `dynamic/silverstripe-elemental-stat-counters` |
-| Testimonials | `Dynamic\Elements\Testimonials\Elements\*` | `dynamic/silverstripe-elemental-testimonials` |
+| Stat Counters | `Dynamic\Elements\StatCounters\Elements\ElementStatCounters` (model: `Dynamic\Elements\StatCounters\Model\StatCounter`) | `dynamic/silverstripe-elemental-stat-counters` |
+| Testimonials | `Dynamic\Elements\Elements\ElementTestimonials` (models: `Dynamic\Elements\Model\*`) | `dynamic/silverstripe-elemental-testimonials` |
 | Row | `WeDevelop\ElementalGrid\Models\ElementRow` | `wedevelopnl/silverstripe-elemental-grid` |
 | Form | `DNADesign\ElementalUserForms\Model\ElementForm` | `dnadesign/silverstripe-elemental-userforms` |
-| Virtual | `DNADesign\Elemental\Models\ElementVirtual` | `dnadesign/silverstripe-elemental-virtual` |
+| Virtual | `DNADesign\ElementalVirtual\Model\ElementVirtual` | `dnadesign/silverstripe-elemental-virtual` |
 
 ### Essentials-Only Elements (from essentials-tools)
 
