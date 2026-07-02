@@ -147,16 +147,26 @@ ddev sake dev/build flush=1
 
 In the CMS: open a migrated page, confirm elements appear, edit one, save, **publish** — confirm the page still renders on the frontend. (Missing `_Versions` rows cause this to silently strip the element from `_Live`.)
 
-**Evidence gate (Phase 5):** paste the source-vs-target row counts before declaring the data half done:
+**Evidence gate (Phase 5):** paste the source-vs-target row counts before declaring the data half done. The source count is **placement rows of published blocks**, not `Block` rows: the skeleton creates one element per `SiteTree_Blocks` row and migrates published blocks only (via the `Block_Live` join), so counting `Block` overcounts drafts and undercounts shared blocks placed on multiple pages.
 
 ```sql
-SELECT COUNT(*) FROM Block WHERE ClassName NOT IN (<skip-classes>);  -- source
-SELECT COUNT(*) FROM Element;                                        -- draft
-SELECT COUNT(*) FROM Element_Live;                                   -- live
-SELECT COUNT(*) FROM Element_Versions;                               -- versions
+-- source: placement rows of published, non-skipped blocks
+SELECT COUNT(*) FROM SiteTree_Blocks stb
+JOIN Block b       ON b.ID = stb.BlockID
+JOIN Block_Live bl ON bl.ID = b.ID
+WHERE b.ClassName NOT IN (<skip-classes>);
+
+-- target: migrated elements only, versions counted per record
+SELECT COUNT(e.ID)                 AS draft_count,
+       COUNT(el.ID)                AS live_count,
+       COUNT(DISTINCT ev.RecordID) AS version_count
+FROM Element e
+LEFT JOIN Element_Live el     ON el.ID = e.ID
+LEFT JOIN Element_Versions ev ON ev.RecordID = e.ID
+WHERE e.ExtraClass LIKE '%migrated-from-block%';
 ```
 
-Source and draft counts match (minus named skips), live matches draft for published pages, and versions >= draft. Repeat for each child sub-object table (PromoItems, gallery items).
+Source count = draft_count = live_count, and version_count >= draft_count. For each child sub-object table (PromoItems, gallery items), run the orphaned-child and subtype-row queries from [references/verification-checklist.md](references/verification-checklist.md) — each must return zero rows.
 
 ### Phase 6 — Visual parity verification (required gate)
 

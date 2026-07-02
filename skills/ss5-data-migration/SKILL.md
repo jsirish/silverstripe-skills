@@ -97,18 +97,23 @@ A migration step is not done until you have pasted the task output and the verif
 
 ## Per-task verification (required)
 
-After **each** task in the workflow below, before declaring the step done, run and paste:
+After **each** task in the workflow below, before declaring the step done, paste evidence scoped to what that task writes:
+
+- **Tasks that write versioned rows** (block migration, link migration, element content): count that task's target tables, draft vs live vs versions:
 
 ```sql
--- Adjust table names per task; the shape is always draft vs live vs versions
+-- Substitute the task's own target tables; the shape is always draft vs live vs versions
 SELECT COUNT(*) FROM Element;
 SELECT COUNT(*) FROM Element_Live;
 SELECT COUNT(*) FROM Element_Versions;
--- Plus the task-specific target, e.g.:
+-- e.g. for the link task:
 SELECT COUNT(*) FROM LinkField_Link;
 ```
 
-Draft and `_Live` counts must match for published content, and `_Versions` must be at least the draft count. Record the counts in the project's `/migrate` runbook under "Expected outputs" so the next run has a baseline to compare against.
+- **Tasks that write unversioned config or relations** (footer links, navigation settings, link fixes): count the target table before and after, and paste the task's own changed/skipped summary.
+- **Asset tasks with no row-count target** (gallery resample): paste the task output showing files processed, and spot-check one resampled variant on the frontend.
+
+For versioned targets, draft and `_Live` counts must match for published content, and `_Versions` must be at least the draft count. Record the counts in the project's `/migrate` runbook under "Expected outputs" so the next run has a baseline to compare against.
 
 ## Migration Workflow
 
