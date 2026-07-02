@@ -8,6 +8,7 @@
       "skills": [
         "silverstripe-3-to-4-upgrade",
         "silverstripe-version-upgrade",
+        "silverstripe-module-ss6-upgrade",
         "block-to-element-migration",
         "ss5-data-migration",
         "ss6-data-migration"

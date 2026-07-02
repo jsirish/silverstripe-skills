@@ -21,6 +21,7 @@ npx skills add jsirish/silverstripe-skills
 | `silverstripe-3-to-4-upgrade` | Complete workflow for upgrading SS3 projects to SS4 |
 | `silverstripe-essentials-cms-training` | CMS editing reference for Silverstripe Essentials websites |
 | `silverstripe-essentials-website` | Technical reference for Dynamic's Silverstripe Essentials websites |
+| `silverstripe-module-ss6-upgrade` | Module-level (composer package) SS6 upgrade loop: branch, constraints, code sweep, CI, tag |
 | `silverstripe-version-upgrade` | Upgrade Silverstripe between major versions (e.g. SS4 → SS5) |
 | `ss5-data-migration` | Execute Silverstripe 5 data migration tasks |
 | `ss6-data-migration` | Silverstripe 6 upgrade data migration workflow |
