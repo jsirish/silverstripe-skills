@@ -187,12 +187,40 @@ Key areas:
 
 ### SS6 Configuration Migration
 
-#### ArrayList namespace migration
-SS6 moved `SilverStripe\ORM\ArrayList` to `SilverStripe\Model\List\ArrayList`. Every PHP file using `use SilverStripe\ORM\ArrayList` will break. Use a global grep + replace:
+#### Namespace and class renames
+
+SS6 relocated several core framework classes. Every `use` statement referencing an old FQCN causes a PHP fatal error at runtime (often first surfacing on `dev/build`). Grep for each old name and replace:
+
+| Old (SS5) | New (SS6) |
+|-----------|-----------|
+| `SilverStripe\View\ViewableData` | `SilverStripe\Model\ModelData` |
+| `SilverStripe\View\ArrayData` | `SilverStripe\Model\ArrayData` |
+| `SilverStripe\ORM\ArrayList` | `SilverStripe\Model\List\ArrayList` |
+| `SilverStripe\ORM\ValidationResult` | `SilverStripe\Core\Validation\ValidationResult` |
 
 ```bash
-rg "use SilverStripe\\\\ORM\\\\ArrayList" app/src/ themes/*/code/
-# Replace with: use SilverStripe\Model\List\ArrayList;
+# Run each grep across app code, module code, and theme code
+rg "SilverStripe\\\\View\\\\ViewableData" app/src/ src/ themes/*/code/
+rg "SilverStripe\\\\View\\\\ArrayData" app/src/ src/ themes/*/code/
+rg "SilverStripe\\\\ORM\\\\ArrayList" app/src/ src/ themes/*/code/
+rg "SilverStripe\\\\ORM\\\\ValidationResult" app/src/ src/ themes/*/code/
+```
+
+The `wernerkrauss/silverstripe-rector` SS6 level set automates most of these renames (see [references/code-quality.md](references/code-quality.md)), but always run the greps afterward: string references in config YAML, `Injector` definitions, and docblocks are not rewritten by Rector.
+
+#### Typed signature requirements
+
+Two related changes cause PHP declaration-compatibility fatals if missed:
+
+- **`validate()` overrides must declare the return type.** Any `DataObject` subclass overriding `validate()` must use `public function validate(): ValidationResult` (with the new `SilverStripe\Core\Validation\ValidationResult` import). PHP throws a fatal declaration-compatibility error otherwise.
+- **`ModelData` magic-method overrides must match parent signatures.** Subclasses of `ModelData` (formerly `ViewableData`) that override `__get`, `__set`, `__isset`, `hasField`, `getField`, `setField`, etc. must add the typed parameters and return types the SS6 parent declares.
+
+```bash
+# Find validate() overrides missing the return type
+rg "public function validate\(\)(?!\s*:)" app/src/ src/ --pcre2
+
+# Find ModelData subclasses, then inspect their overridden magic methods
+rg "extends ModelData|extends ViewableData" app/src/ src/
 ```
 
 #### BuildTask signature change
@@ -388,7 +416,9 @@ See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill
 ## SS6 Breaking Changes
 
 > [!WARNING]
-> **ArrayList namespace moved in SS6.** `SilverStripe\ORM\ArrayList` → `SilverStripe\Model\List\ArrayList`. Every `use` statement referencing the old namespace will cause a fatal error at runtime. Systematic grep — see Phase 4.
+> **Core classes renamed in SS6.** `ViewableData` → `ModelData`, `ArrayData` moved to `SilverStripe\Model`, `ArrayList` → `SilverStripe\Model\List\ArrayList`, `ValidationResult` → `SilverStripe\Core\Validation\ValidationResult`. Every `use` statement referencing an old FQCN is a fatal error at runtime. Systematic grep, one per rename: see Phase 4.
+>
+> **Typed signatures enforced in SS6.** `validate()` overrides need `: ValidationResult`; `ModelData` subclasses overriding `__get`, `hasField`, `__isset`, etc. need typed parameters and return types matching the parent. Both are PHP declaration-compatibility fatals if missed. See Phase 4.
 >
 > **BuildTask signature changed in SS6.** `run($request)` → `execute(InputInterface $input, PolyOutput $output): int` returning `Command::SUCCESS`. All custom BuildTask subclasses must be updated.
 >

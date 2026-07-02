@@ -88,7 +88,23 @@
 | Dynamic FlexSlider | `Dynamic\FlexSlider\*` |
 | Dynamic Locator | `Dynamic\Locator\*` |
 
-> Namespaces are unchanged from SS5. The upgrade is primarily a version bump with API refinements and dependency upgrades — no PSR-4 namespace migration is required.
+> Module namespaces are unchanged from SS5: no PSR-4 namespace migration is required for project or Dynamic module code. Core framework classes, however, were relocated. See the class renames below.
+
+### Core Class Renames (SS5 → SS6)
+
+Each old FQCN is a fatal error at runtime in SS6. Grep for every one (see Phase 4 of the SKILL for the grep commands):
+
+| Old (SS5) | New (SS6) |
+|-----------|-----------|
+| `SilverStripe\View\ViewableData` | `SilverStripe\Model\ModelData` |
+| `SilverStripe\View\ArrayData` | `SilverStripe\Model\ArrayData` |
+| `SilverStripe\ORM\ArrayList` | `SilverStripe\Model\List\ArrayList` |
+| `SilverStripe\ORM\ValidationResult` | `SilverStripe\Core\Validation\ValidationResult` |
+
+Related typing requirements (declaration-compatibility fatals if missed):
+
+- `validate()` overrides on `DataObject` subclasses must declare `: ValidationResult` and import the new `SilverStripe\Core\Validation\ValidationResult`.
+- Subclasses of `ModelData` (formerly `ViewableData`) overriding `__get`, `__set`, `__isset`, `hasField`, etc. must add typed parameters and return types matching the SS6 parent signatures.
 
 ---
 
