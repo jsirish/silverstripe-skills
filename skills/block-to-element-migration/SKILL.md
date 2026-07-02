@@ -166,7 +166,7 @@ LEFT JOIN Element_Versions ev ON ev.RecordID = e.ID
 WHERE e.ExtraClass LIKE '%migrated-from-block%';
 ```
 
-Source count = draft_count = live_count, and version_count >= draft_count. For each child sub-object table (PromoItems, gallery items), run the orphaned-child and subtype-row queries from [references/verification-checklist.md](references/verification-checklist.md) — each must return zero rows.
+Source count = draft_count = live_count, and version_count >= draft_count. For each child sub-object table (PromoItems, gallery items), run the orphaned-child and subtype-row queries from [references/verification-checklist.md](references/verification-checklist.md): each must return zero rows.
 
 ### Phase 6 — Visual parity verification (required gate)
 
