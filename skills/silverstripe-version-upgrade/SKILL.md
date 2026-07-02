@@ -197,6 +197,7 @@ SS6 relocated several core framework classes. Every `use` statement referencing 
 | `SilverStripe\View\ArrayData` | `SilverStripe\Model\ArrayData` |
 | `SilverStripe\ORM\ArrayList` | `SilverStripe\Model\List\ArrayList` |
 | `SilverStripe\ORM\ValidationResult` | `SilverStripe\Core\Validation\ValidationResult` |
+| `SilverStripe\ORM\ValidationException` | `SilverStripe\Core\Validation\ValidationException` |
 
 ```bash
 # Run each grep across app code, module code, and theme code
@@ -204,6 +205,7 @@ rg "SilverStripe\\\\View\\\\ViewableData" app/src/ src/ themes/*/code/
 rg "SilverStripe\\\\View\\\\ArrayData" app/src/ src/ themes/*/code/
 rg "SilverStripe\\\\ORM\\\\ArrayList" app/src/ src/ themes/*/code/
 rg "SilverStripe\\\\ORM\\\\ValidationResult" app/src/ src/ themes/*/code/
+rg "SilverStripe\\\\ORM\\\\ValidationException" app/src/ src/ themes/*/code/
 ```
 
 The `wernerkrauss/silverstripe-rector` SS6 level set automates most of these renames (see [references/code-quality.md](references/code-quality.md)), but always run the greps afterward: string references in config YAML, `Injector` definitions, and docblocks are not rewritten by Rector.
