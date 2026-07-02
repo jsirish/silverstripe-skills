@@ -90,9 +90,9 @@ namespace App\Task;
 
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\ORM\DB;
+use SilverStripe\PolyExecution\PolyOutput;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
 class MigrateExampleTask extends BuildTask
 {
@@ -100,7 +100,7 @@ class MigrateExampleTask extends BuildTask
     protected string $title = 'Migrate Example Data';
     protected static string $description = 'Migrates data from legacy table to new structure';
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, PolyOutput $output): int
     {
         $output->writeln('Starting migration...');
 
@@ -152,7 +152,7 @@ class MigrateExampleTask extends BuildTask
 > [!IMPORTANT]
 > Key differences from SS5:
 > - `$commandName` static property is **required** — without it the task is unreachable
-> - `run($request)` → `execute(InputInterface, OutputInterface): int`
+> - `run($request)` → `protected execute(InputInterface, PolyOutput): int`
 > - `echo` → `$output->writeln()`
 > - `$title` / `$description` are typed properties (string or static string)
 > - Return `Command::SUCCESS` (0) or `Command::FAILURE` (1)

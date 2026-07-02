@@ -138,8 +138,9 @@ ddev composer require dynamic/silverstripe-elemental-accordion:^6.0 --no-update
 # Add SS6-required packages that SS5 had as transitive
 ddev composer require silverstripe/htmleditor-tinymce:^1.0 --no-update
 
-# Replace deprecated packages
-ddev composer require --no-update silverstripe/linkfield:^4.0
+# Replace deprecated packages (linkfield 4.x is CMS 5 only; the SS6 line is 5.x.
+# Run the linkable data migration on SS5 with linkfield ^4 BEFORE this bump)
+ddev composer require --no-update silverstripe/linkfield:^5.0
 ddev composer remove --no-update sheadawson/silverstripe-linkable
 
 # Remove incompatible
@@ -231,10 +232,10 @@ SS6 changes `run($request)` → `execute(InputInterface, PolyOutput): int` retur
 Key differences:
 | SS4/SS5 | SS6 |
 |---------|-----|
-| `protected $title = '...'` | `protected static string $title = '...'` |
+| `protected $title = '...'` | `protected string $title = '...'` |
 | `protected $description = '...'` | `protected static string $description = '...'` |
 | `private static $segment = '...'` | `protected static string $commandName = '...'` (required) |
-| `public function run($request)` | `public function execute(InputInterface $input, OutputInterface $output): int` |
+| `public function run($request)` | `protected function execute(InputInterface $input, PolyOutput $output): int` |
 | `echo` / `$this->log()` | `$output->writeln()` |
 | Implicit return | `return Command::SUCCESS` |
 
@@ -430,7 +431,7 @@ See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill
 >
 > **DB connection default changed.** SS6 defaults to unix socket. DDEV requires `SS_DATABASE_SERVER=db` in `.ddev/config.yaml`.
 >
-> **Linkable removed.** `sheadawson/silverstripe-linkable` has no SS6 version. Replace with `silverstripe/linkfield ^4.0`. Template API changes documented above.
+> **Linkable removed.** `sheadawson/silverstripe-linkable` has no SS6 version. Replace with `silverstripe/linkfield ^5` (the 4.x line is CMS 5 only; run the linkable data migration on SS5 with linkfield `^4` BEFORE the SS6 bump). Template API changes documented above.
 >
 > **Embedfield replaced.** `nathancox/embedfield` has no SS6 version. Replace with `fromholdio/silverstripe-embedfield ^5.1`.
 
