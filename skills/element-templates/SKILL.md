@@ -94,6 +94,44 @@ Every template must contain **at least 2 non-row elements**. A single element (e
 
 **Example:** Team Photo → About Content → Client Testimonials
 
+### Pattern 7: Hero → Split Content → FAQ → CTA (Program / Service Detail)
+**Use for:** Program, service, or offering detail templates
+
+| Position | Element Type | Purpose |
+|----------|-------------|---------|
+| 1 | `HeroMedia` | Visual hook, names the program/service |
+| 2 | `ElementContent` (split media layout) | The offering explained, text beside imagery |
+| 3 | `ElementAccordion` | FAQ, answers the practical questions |
+| 4 | `ElementCallToAction` | Enroll / book / inquire |
+
+**Example:** Hero ("Youth Robotics Program") → Split Content (curriculum + photo) → FAQ ("What ages? What cost?") → CTA ("Register Today")
+
+### Pattern 8: Intro → Linked Card Grid → CTA (Section Hub / Pathways)
+**Use for:** Section landing pages that route visitors to child pages
+
+| Position | Element Type | Purpose |
+|----------|-------------|---------|
+| 1 | `SimpleContent` | Short intro framing the section |
+| 2 | `ElementCard` grid (each card linked) | Navigation pathways to child pages |
+| 3 | `ElementCallToAction` | Fallback for visitors who need help choosing |
+
+**Example:** Intro ("Explore Our Services") → 3 linked Cards (each routing to a child page) → CTA ("Not sure? Talk to us")
+
+Distinct from a plain Service Cards template by intent: every card carries an `ElementLink` to a destination page (navigation, not description), and the intro/CTA framing positions it as a section hub.
+
+### Pattern 9: Intro → Structured Contact → CTA (Location & Hours)
+**Use for:** Location, contact, and visit-us templates
+
+| Position | Element Type | Purpose |
+|----------|-------------|---------|
+| 1 | `SimpleContent` | Welcome / visit framing |
+| 2 | `ElementCustomerService` (structured address fields) | Address, hours, and the geocoded map |
+| 3 | `ElementCallToAction` | Directions / appointment prompt |
+
+**Example:** Intro ("Visit Our Office") → Customer Service block (address, hours, map) → CTA ("Schedule a Visit")
+
+The map only renders when the structured `Address`/`City`/`State`/`PostalCode`/`Country` fields are populated; see the gotcha below.
+
 ---
 
 ## Anti-Patterns (What NOT to Do)
@@ -148,13 +186,6 @@ Dynamic\Essentials\Model\StaffMember:
     Position: 'CEO'
     ElementStaff: =>Dynamic\Essentials\Element\ElementStaff.myStaff
 
-# Testimonials → Testimonial
-Dynamic\Elements\Model\Testimonial:
-  testimonial1:
-    Name: 'Dana Smith'
-    Affiliation: 'Acme Corp'  # NOT "Company" — field is Affiliation
-    ElementTestimonials: =>Dynamic\Elements\Elements\ElementTestimonials.myTestimonials
-
 # Accordion → AccordionPanel
 Dynamic\Elements\Accordion\Model\AccordionPanel:
   panel1:
@@ -203,6 +234,38 @@ Dynamic\Elements\Sponsors\Elements\ElementSponsor:
   mySponsors:
     Sponsors: =>Dynamic\Elements\Sponsors\Model\Sponsor.sponsor1, =>Dynamic\Elements\Sponsors\Model\Sponsor.sponsor2
 ```
+
+### Shared-Category Many-Many (Testimonials)
+
+`ElementTestimonials` does NOT own its testimonials. It selects quotes through a
+shared `TestimonialCategory` (many-many on both sides). Wire the SAME category
+onto BOTH the element AND each testimonial, plus a `Limit`:
+
+```yaml
+# Category first (shared record)
+Dynamic\Elements\Model\TestimonialCategory:
+  clientQuotes:
+    Title: 'Client Quotes'
+
+# Element selects by category + limit
+Dynamic\Elements\Elements\ElementTestimonials:
+  myTestimonials:
+    Limit: 3
+    TestimonialCategories: =>Dynamic\Elements\Model\TestimonialCategory.clientQuotes
+
+# Each testimonial joins the same category
+Dynamic\Elements\Model\Testimonial:
+  testimonial1:
+    Name: 'Dana Smith'
+    Affiliation: 'Acme Corp'  # NOT "Company", the field is Affiliation
+    TestimonialCategories: =>Dynamic\Elements\Model\TestimonialCategory.clientQuotes
+```
+
+> [!WARNING]
+> Writing `ElementTestimonials: =>...element` on a `Testimonial` is a **silent
+> no-op**: there is no such relation. The populate run succeeds, the element
+> renders empty. Category wiring on both sides is the only correct form.
+> See also the template-duplication gotcha below.
 
 ---
 
@@ -310,6 +373,15 @@ SilverStripe\Assets\Image:
 
 > [!WARNING]
 > **ElementCallToAction (`ContentAlign`)**: Omission of the `ContentAlign` field inside an `ElementCallToAction` fixture will cause severe PHP 8.x null-to-string deprecation warnings that crash layout rendering upstream. Always forcefully populate `ContentAlign` (e.g. `'Center'`, `'Left'`, `'Right'`).
+
+> [!WARNING]
+> **Testimonials do not travel through templates**: the element-to-testimonial link is a many-many to shared `TestimonialCategory`/`Testimonial` records, so it does NOT survive element duplication (template preview/apply). A testimonials template should pre-seed a category (see "Shared-Category Many-Many" above), and its `Description` should tell the editor to pick a testimonial category after applying the template. Contrast: `ElementSponsor.Sponsors` is a direct many-many on the element and DOES survive duplication.
+
+> [!WARNING]
+> **`$button(N, Label)` resolves against the consuming project's palette**: it is the fixture token for the `ButtonColor` field (e.g. `ButtonColor: '$button(1, Primary)'`, where N is the palette slot and Label the palette button label). Shared templates must use the generic labels `Primary` / `Secondary`. If a project's palette lacks the label, the color resolver logs an info-level fallback (e.g. "Button label 'Primary' not found ... using 'Navy'"), which is benign, not an error. Never hard-code project-specific palette labels (Navy, Gold, Orange) in shared templates.
+
+> [!WARNING]
+> **Location maps need the structured address**: `ElementCustomerService` renders its map from the structured `Address`/`City`/`State`/`PostalCode`/`Country` fields (geocoded), not from the `Content` HTML. A location template must populate the structured fields or the map will not render.
 
 > [!WARNING]
 > **StatCounter field roles + sizing**: `Label` is `Varchar(20)` and renders at the SAME large size as `Statistic` - it is for a short unit (`'%'`, `'wks'`), never the descriptor. Put the number/word in `Statistic`, the descriptor in `Title` (small caption), and leave `Label` empty unless you have a real short unit. Putting a long descriptor in `Label` overflows the stat box - this caused a real production bug ("stat counters too big") on a live client build.
