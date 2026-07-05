@@ -1,6 +1,6 @@
 ---
 name: essentials-blocks
-description: Guidelines for working with Essentials block elements in the Silverstripe Essentials Demo workspace
+description: Reference for the Elemental block set available in Silverstripe Essentials projects - which elements are supported vs not, their namespaces, and theme/subtheme notes. Use when choosing or verifying which block elements an Essentials site can use, when an element class or namespace lookup fails, or when adding blocks to an Essentials demo/workspace. Triggers on "which blocks/elements are available", "supported elements", "Essentials blocks", or element namespace questions.
 ---
 
 # Essentials Blocks Guide

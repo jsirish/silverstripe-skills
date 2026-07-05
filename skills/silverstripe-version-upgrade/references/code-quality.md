@@ -157,22 +157,25 @@ jobs:
 
 ### Visual Regression
 
-Replace manual side-by-side checks with automated pixel-diff captures. See the [visual-regression-upgrade](../../visual-regression-upgrade/SKILL.md) skill for setup, auth, mask config, and report interpretation.
+Replace manual side-by-side checks with automated pixel-diff captures. See the `visual-regression-upgrade` skill (from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills), installed separately) for setup, auth, mask config, and report interpretation.
 
 Basic workflow:
 ```bash
+# Path to the installed skill; adjust for your agent's skills dir
+VR=~/.claude/skills/visual-regression-upgrade
+
 # Crawl reference URLs from the current site
-python ../visual-regression-upgrade/scripts/crawl_urls.py \
+python "$VR"/scripts/crawl_urls.py \
   --url https://www.example.com --limit 30 --out paths.txt
 
 # Capture + diff both environments
-python ../visual-regression-upgrade/scripts/capture.py \
+python "$VR"/scripts/capture.py \
   --prod https://www.example.com \
   --local https://upgrade.example.com \
   --paths-file paths.txt \
   --out ./vr-out
 
-python ../visual-regression-upgrade/scripts/diff_report.py \
+python "$VR"/scripts/diff_report.py \
   --in ./vr-out --out ./vr-out/report
 ```
 

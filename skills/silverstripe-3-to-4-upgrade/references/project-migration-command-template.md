@@ -103,7 +103,7 @@ Record the confirmation string / row count each task prints, so a bad run is obv
 - [ ] Frontend QA of each page type (HomePage, standard, blog, custom) — no blank pages
 - [ ] CMS tree loads; Elemental editor renders; Settings/SiteConfig section works
 - [ ] `ElementalArea_Live` populated (elements visible on the frontend, not just draft)
-- [ ] Visual regression vs the `-legacy` instance (see visual-regression-upgrade skill)
+- [ ] Visual regression vs the `-legacy` instance (see the `visual-regression-upgrade` skill from jsirish/workflow-skills)
 - [ ] <project-specific checks: utility links, footer nav, custom features>
 
 ## Known gotchas (this project)

@@ -1,6 +1,6 @@
 ---
 name: dynamic-base-site
-description: Dynamic's Silverstripe base-site stack patterns - key modules, namespaces, and upgrade considerations
+description: Reference for Dynamic's Silverstripe base-site stack - the dynamic/silverstripe-base-site module set, per-version namespaces, extension locations (SS4 vs SS5+), and upgrade checklist. Use when working in a project that requires dynamic/silverstripe-base-site, when resolving "class not found" or namespace errors in a Dynamic base-site project, or when planning an upgrade of a base-site project. Triggers on "base-site", "base site stack", "Dynamic base site", or unfamiliar dynamic/* module questions.
 ---
 
 # Dynamic Silverstripe Base-Site Stack

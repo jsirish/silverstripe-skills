@@ -162,10 +162,11 @@ ddev composer require silverstripe/vendor-plugin:^3 --no-update
 
 ### `silverstripeltd/betamask` is an SS6 blocker
 
-`silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Remove it before running `composer update` — no SS6 release exists as of June 2026:
+`silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Check for an SS6-compatible release before removing it:
 
 ```bash
-ddev composer remove silverstripeltd/betamask
+ddev composer show -a silverstripeltd/betamask   # check for an SS6-compatible release
+ddev composer remove silverstripeltd/betamask    # if none found
 ```
 
 ### `nathancox/embedfield` → `fromholdio` handled upstream

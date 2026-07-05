@@ -1,6 +1,6 @@
 ---
 name: essentials-theme
-description: Create and customize subthemes extending silverstripe-essentials-theme
+description: Create and customize subthemes extending dynamic/silverstripe-essentials-theme - directory layout, theme cascade config, Bootstrap-variable vs --es-* CSS-variable override strategy, build commands, and component styling. Use when starting a new subtheme, changing an Essentials site's colors/typography/spacing, or debugging why a theme override is not applying. Triggers on "subtheme", "essentials theme", "override the theme", "change the site colors/fonts", "--es- variables".
 ---
 
 # Essentials Theme Customization Skill
@@ -97,7 +97,7 @@ All theme variables use the `--es-` prefix. Key categories:
 | Carousel | `--es-carousel-` | `--es-carousel-control-bg` |
 | Testimonials | `--es-testimonials-` | `--es-testimonials-name-color` |
 
-Full reference: [css-variables.md](docs/css-variables.md)
+Full reference: [`docs/css-variables.md`](https://github.com/dynamic/silverstripe-essentials-theme/blob/2/docs/css-variables.md) in the base theme (also available locally at `vendor/dynamic/silverstripe-essentials-theme/docs/css-variables.md` once installed).
 
 ## Build Commands
 

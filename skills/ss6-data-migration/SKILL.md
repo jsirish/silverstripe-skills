@@ -190,18 +190,21 @@ elemental blocks render their links.
 
 ### Visual regression (optional)
 
-For a more thorough check, use the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill to capture automated pixel diffs between production and the SS6 upgrade:
+For a more thorough check, use the `visual-regression-upgrade` skill (from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills), installed separately) to capture automated pixel diffs between production and the SS6 upgrade:
 ```bash
-python ../visual-regression-upgrade/scripts/crawl_urls.py \
+# Path to the installed skill; adjust for your agent's skills dir
+VR=~/.claude/skills/visual-regression-upgrade
+
+python "$VR"/scripts/crawl_urls.py \
   --url https://{production-domain} --limit 30 --out paths.txt
 
-python ../visual-regression-upgrade/scripts/capture.py \
+python "$VR"/scripts/capture.py \
   --prod https://{production-domain} \
   --local https://{project}.ddev.site \
   --paths-file paths.txt \
   --out ./vr-out
 
-python ../visual-regression-upgrade/scripts/diff_report.py \
+python "$VR"/scripts/diff_report.py \
   --in ./vr-out --out ./vr-out/report
 ```
 

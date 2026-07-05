@@ -387,9 +387,11 @@ The version map reference doc lists some packages at incorrect versions for SS6.
 | `dynamic/silverstripe-essentials-theme` | `main` | `^2@dev` (branch `2`) |
 | `dynamic/silverstripe-elemental-templates` | `^6.0` | `^3@dev` |
 
-### 5. TinyMCE is bundled in `silverstripe/admin` for SS6
+### 5. TinyMCE: do not require it explicitly in Essentials SS6 projects
 
-Do not require `silverstripe/htmleditor-tinymce` — it is included inside `silverstripe/admin` and adding it as an explicit dependency causes conflicts.
+In an Essentials SS6 recipe project, `silverstripe/htmleditor-tinymce` already arrives through the recipe's dependency chain — adding it as an explicit dependency causes version conflicts. Verify with `composer why silverstripe/htmleditor-tinymce` (it should be pulled in transitively).
+
+This is the opposite of the guidance for non-Essentials SS6 upgrades, where the package must be explicitly required (see the `silverstripe-version-upgrade` skill, "TinyMCE extraction"). Either way the end state is the same: the package must be installed, or CMS Content fields silently degrade to plain textareas (`data-editor="textarea"`).
 
 ### Confirmed working versions (SS6)
 
