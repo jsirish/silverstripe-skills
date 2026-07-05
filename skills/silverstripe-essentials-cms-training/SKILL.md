@@ -11,7 +11,7 @@ This skill provides a complete CMS editing reference for Silverstripe Essentials
 - Troubleshooting CMS editing issues
 - Building page layout guidance
 
-Source documentation lives at `~/Sites/essentials-demo/docs/` (15 chapters).
+Source documentation: the `docs/` directory (15 chapters) of the Essentials demo project, if a checkout is available locally (conventionally `~/Sites/essentials-demo/`). This skill is self-contained when it is not.
 
 ## CMS Fundamentals
 

@@ -8,6 +8,12 @@ Agent skills for [Silverstripe CMS](https://www.silverstripe.org/) development â
 npx skills add jsirish/silverstripe-skills
 ```
 
+> **Companion repo:** the upgrade skills reference `ddev-sync` and `visual-regression-upgrade` from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills). Install both repos for the full upgrade workflow:
+>
+> ```bash
+> npx skills add jsirish/workflow-skills
+> ```
+
 ## Skills
 
 | Skill | Description |

@@ -1,6 +1,6 @@
 ---
 name: element-templates
-description: Create element template fixtures for the Essentials demo template library
+description: Design and author element template fixtures (multi-element YAML compositions) for the recipe-silverstripe-essentials-fixtures template library - composition patterns, element palette, grid/row styling, and fixture gotchas. Use when creating or editing template fixtures for the Essentials demo library, composing multi-element page sections in YAML, or debugging template fixture population. Triggers on "element template", "template fixture", "template library", "compose a template". For recipe config and running populate, use essentials-fixtures instead.
 ---
 
 # Element Templates Skill
@@ -16,7 +16,11 @@ This skill guides you through **designing** and **implementing** element templat
 | **Silverstripe Essentials Website** | Full Essentials project architecture, namespaces, and config |
 
 > [!NOTE]
-> **Scope**: This skill covers YAML authoring — composition patterns, element palette, grid system, gotchas. For the **recipe package configuration** (loading fixtures, extensions, running populate, troubleshooting), see the **Essentials Fixtures Recipe** skill. For the **element placeholder fixture system** (`element-fixtures.yml`), see the [Essentials Fixtures Recipe skill](../essentials-fixtures/SKILL.md) in the Essentials Fixtures Recipe skill.
+> **Scope**: This skill covers YAML authoring — composition patterns, element palette, grid system, gotchas. For the **recipe package configuration** (loading fixtures, extensions, running populate, troubleshooting), see the **Essentials Fixtures Recipe** skill. For the **element placeholder fixture system** (`element-fixtures.yml`), see the [Essentials Fixtures Recipe skill](../essentials-fixtures/SKILL.md).
+
+Reference files bundled with this skill:
+- [references/fixture-syntax.md](references/fixture-syntax.md) — fixture YAML syntax (images, links, has-many, merge modes)
+- [examples/simple-template.yml](examples/simple-template.yml), [examples/complex-template.yml](examples/complex-template.yml) — worked template fixtures
 
 ## Core Design Principle
 

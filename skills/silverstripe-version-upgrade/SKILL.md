@@ -162,7 +162,7 @@ ddev composer vendor-expose
 > ```
 
 > [!WARNING]
-> **SS6 blocker — `silverstripeltd/betamask`:** `silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Remove it before running `composer update`. No SS6 release exists as of June 2026.
+> **SS6 blocker — `silverstripeltd/betamask`:** `silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Check for an SS6-compatible release (`composer show -a silverstripeltd/betamask`); if none, remove it before running `composer update`.
 > ```bash
 > ddev composer remove silverstripeltd/betamask
 > ```
@@ -274,6 +274,9 @@ Without this, `dev/build` fails with "Connection refused."
 #### TinyMCE extraction
 SS6 extracted TinyMCE from `silverstripe/admin` into `silverstripe/htmleditor-tinymce ^1.0`. If missing, the CMS Content field silently degrades to a plain textarea (`data-editor="textarea"` instead of `data-editor="tinyMCE"`).
 
+> [!NOTE]
+> **Essentials recipe exception:** in Essentials SS6 recipe projects the package arrives transitively through the recipe, and an explicit require causes conflicts — check `composer why silverstripe/htmleditor-tinymce` before adding it (see the `silverstripe-essentials-website` skill).
+
 **Fix:** Add to `composer.json` under `require` (not `require-dev`):
 ```json
 "silverstripe/htmleditor-tinymce": "^1.0"
@@ -377,24 +380,27 @@ done
 Diff the SS5 upgrade against the legacy SS4 instance from Phase 1.4:
 
 ```bash
+# Path to the installed skill; adjust for your agent's skills dir
+VR=~/.claude/skills/visual-regression-upgrade
+
 # Crawl the legacy site for a URL list
 cd ~/Sites/{project}-legacy
-python ../visual-regression-upgrade/scripts/crawl_urls.py \
+python "$VR"/scripts/crawl_urls.py \
   --url https://{project}-legacy.ddev.site --limit 30 --out paths.txt
 
 # Capture + diff both environments
 cd ~/Sites/{project}
-python ../visual-regression-upgrade/scripts/capture.py \
+python "$VR"/scripts/capture.py \
   --prod https://{project}-legacy.ddev.site \
   --local https://{project}.ddev.site \
   --paths-file ../{project}-legacy/paths.txt \
   --out ./vr-out
 
-python ../visual-regression-upgrade/scripts/diff_report.py \
+python "$VR"/scripts/diff_report.py \
   --in ./vr-out --out ./vr-out/report
 ```
 
-See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill for setup, auth, mask config, and report interpretation.
+See the `visual-regression-upgrade` skill (from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills), installed separately) for setup, auth, mask config, and report interpretation.
 
 ## Key Discoveries & Gotchas
 
@@ -527,4 +533,4 @@ Recipes follow `recipe-cms` major version numbering. Elemental modules follow th
 
 - [silverstripe-3-to-4-upgrade](../silverstripe-3-to-4-upgrade/SKILL.md) — the prior, structurally different leg. Use it for legacy SS3 → SS4 projects before this skill applies.
 - [ss5-data-migration](../ss5-data-migration/SKILL.md) / [ss6-data-migration](../ss6-data-migration/SKILL.md) — version-specific data-migration runbooks for the BuildTasks in Phase 5.
-- [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) — capture pixel diffs against the legacy instance to confirm parity (also linked inline in the Build & Verify phase).
+- `visual-regression-upgrade` (from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills), installed separately) — capture pixel diffs against the legacy instance to confirm parity (also referenced inline in the Build & Verify phase).

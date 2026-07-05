@@ -91,7 +91,7 @@ ddev exec ./sync.sh  # sync prod DB and assets
 > The `-legacy` instance hits the same Mutagen `upload_dirs` conflict as the upgrade instance on its
 > first prod sync (`Mutagen sync completed with problems … unable to relocate staged file: file exists`).
 > Set `upload_dirs: [assets]` in **both** projects' `.ddev/config.yaml`, then `ddev mutagen reset && ddev restart`.
-> See the [ddev-sync skill](../ddev-sync/SKILL.md#mutagen-upload_dirs-conflicts-after-prod-sync) for details.
+> See the `ddev-sync` skill (from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills), installed separately), "Mutagen upload_dirs conflicts after prod sync", for details.
 
 This gives you `https://{project}-legacy.ddev.site` — a running SS3 instance against the same data you're upgrading. Use it to:
 - Confirm what each URL renders on SS3 before starting SS4 work
@@ -323,22 +323,25 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 
 5. **Visual regression** — prove pixel parity between the SS3 legacy site and the SS4 upgrade:
    ```bash
+   # Path to the installed skill; adjust for your agent's skills dir
+   VR=~/.claude/skills/visual-regression-upgrade
+
    # Using the legacy instance from Phase 1b
    cd ~/Sites/{project}-legacy
-   python ../visual-regression-upgrade/scripts/crawl_urls.py \
+   python "$VR"/scripts/crawl_urls.py \
      --url https://{project}-legacy.ddev.site --limit 30 --out paths.txt
 
    cd ~/Sites/{project}
-   python ../visual-regression-upgrade/scripts/capture.py \
+   python "$VR"/scripts/capture.py \
      --prod https://{project}-legacy.ddev.site \
      --local https://{project}.ddev.site \
      --paths-file ../{project}-legacy/paths.txt \
      --out ./vr-out
 
-   python ../visual-regression-upgrade/scripts/diff_report.py \
+   python "$VR"/scripts/diff_report.py \
      --in ./vr-out --out ./vr-out/report
    ```
-   See the [visual-regression-upgrade](../visual-regression-upgrade/SKILL.md) skill for setup, auth, mask config, and report interpretation. The legacy-vs-upgrade capture eliminates content-drift false positives and catches layout regressions manual QA misses.
+   See the `visual-regression-upgrade` skill (from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills), installed separately) for setup, auth, mask config, and report interpretation. The legacy-vs-upgrade capture eliminates content-drift false positives and catches layout regressions manual QA misses.
 
 ## Phase 9: Code Quality & CI
 
