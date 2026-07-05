@@ -162,9 +162,10 @@ ddev composer vendor-expose
 > ```
 
 > [!WARNING]
-> **SS6 blocker — `silverstripeltd/betamask`:** `silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Check for an SS6-compatible release (`composer show -a silverstripeltd/betamask`); if none, remove it before running `composer update`.
+> **SS6 blocker — `silverstripeltd/betamask`:** `silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Check for an SS6-compatible release before removing it:
 > ```bash
-> ddev composer remove silverstripeltd/betamask
+> ddev composer show -a silverstripeltd/betamask   # check for an SS6-compatible release
+> ddev composer remove silverstripeltd/betamask    # if none found
 > ```
 
 **Evidence gate (Phase 3):** before moving to config migration, paste the output of:

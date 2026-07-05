@@ -97,7 +97,7 @@ All theme variables use the `--es-` prefix. Key categories:
 | Carousel | `--es-carousel-` | `--es-carousel-control-bg` |
 | Testimonials | `--es-testimonials-` | `--es-testimonials-name-color` |
 
-Full reference: the `--es-*` variable definitions in the [dynamic/silverstripe-essentials-theme](https://github.com/dynamic/silverstripe-essentials-theme) source (search the theme's SCSS for `--es-`).
+Full reference: [`docs/css-variables.md`](https://github.com/dynamic/silverstripe-essentials-theme/blob/2/docs/css-variables.md) in the base theme (also available locally at `vendor/dynamic/silverstripe-essentials-theme/docs/css-variables.md` once installed).
 
 ## Build Commands
 
