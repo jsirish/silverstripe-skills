@@ -15,18 +15,6 @@
       ]
     },
     {
-      "title": "Essentials Stack",
-      "description": "Working with Dynamic's Silverstripe Essentials theme and modules",
-      "skills": [
-        "essentials-theme",
-        "essentials-blocks",
-        "essentials-fixtures",
-        "element-templates",
-        "silverstripe-essentials-website",
-        "silverstripe-essentials-cms-training"
-      ]
-    },
-    {
       "title": "Dev Environment & Deployment",
       "description": "Local dev, syncing, and deployment workflows",
       "skills": [

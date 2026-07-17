@@ -1,6 +1,8 @@
 # silverstripe-skills
 
-Agent skills for [Silverstripe CMS](https://www.silverstripe.org/) development — version upgrades, Elemental content blocks, the Essentials theme stack, and deployment workflows. Maintained by [Jason Irish](https://github.com/jsirish).
+Agent skills for [Silverstripe CMS](https://www.silverstripe.org/) development: version upgrades, legacy Blocks-to-Elemental migration, base-site patterns, and deployment workflows. Maintained by [Jason Irish](https://github.com/jsirish).
+
+> **Moved:** the Dynamic Essentials delivery-method skills (`essentials-blocks`, `element-templates`, `essentials-fixtures`, `essentials-theme`, `silverstripe-essentials-website`, `silverstripe-essentials-cms-training`) now live in the private [`dynamic/agency-skills`](https://github.com/dynamic/agency-skills) repo, alongside the content pipeline that populates into them.
 
 ## Install
 
@@ -20,13 +22,7 @@ npx skills add jsirish/silverstripe-skills
 |-------|-------------|
 | `block-to-element-migration` | Migrate legacy Blocks module data to Elemental elements |
 | `dynamic-base-site` | Dynamic's Silverstripe base-site stack patterns |
-| `element-templates` | Create element template fixtures for the Essentials demo library |
-| `essentials-blocks` | Guidelines for working with Essentials block elements |
-| `essentials-fixtures` | Configure recipe-silverstripe-essentials-fixtures |
-| `essentials-theme` | Create and customize subthemes extending silverstripe-essentials-theme |
 | `silverstripe-3-to-4-upgrade` | Complete workflow for upgrading SS3 projects to SS4 |
-| `silverstripe-essentials-cms-training` | CMS editing reference for Silverstripe Essentials websites |
-| `silverstripe-essentials-website` | Technical reference for Dynamic's Silverstripe Essentials websites |
 | `silverstripe-module-ss6-upgrade` | Module-level (composer package) SS6 upgrade loop: branch, constraints, code sweep, CI, tag |
 | `silverstripe-version-upgrade` | Upgrade Silverstripe between major versions (e.g. SS4 → SS5) |
 | `ss5-data-migration` | Execute Silverstripe 5 data migration tasks |
@@ -45,7 +41,7 @@ npx skills add jsirish/silverstripe-skills --skill '*' -a claude-code -g
 ### Install specific skills
 
 ```bash
-npx skills add jsirish/silverstripe-skills --skill silverstripe-version-upgrade --skill silverstripe-essentials-website -a claude-code -g
+npx skills add jsirish/silverstripe-skills --skill silverstripe-version-upgrade --skill silverstripe-module-ss6-upgrade -a claude-code -g
 ```
 
 ### Install for multiple agents
