@@ -441,6 +441,15 @@ See the `visual-regression-upgrade` skill (from [jsirish/workflow-skills](https:
 > **Linkable removed.** `sheadawson/silverstripe-linkable` has no SS6 version. Replace with `silverstripe/linkfield ^5` (the 4.x line is CMS 5 only; run the linkable data migration on SS5 with linkfield `^4` BEFORE the SS6 bump). Template API changes documented above.
 >
 > **Embedfield replaced.** `nathancox/embedfield` has no SS6 version. Replace with `fromholdio/silverstripe-embedfield ^5.1`.
+>
+> **`CMSPageAddController` removed.** Any module extension bound to it (commonly an `updatePageOptions(FieldList $fields)` hook on the "Add new page" flow) is dead code with no error - the extended class no longer exists, so the hook never fires.
+>
+> - **Add fields to the add form:** extend `SilverStripe\CMS\Forms\CMSMainAddForm` with `updateFields(FieldList $fields)`. The page-type field is now named `RecordType` (was `PageType`), an `OptionsetField` - insert after it.
+> - **Act on create:** extend `SilverStripe\CMS\Controllers\CMSMain` with `updateDoAdd(DataObject $record, Form $form)` (`CMSMainAddForm::doAdd()` fires `$controller->extend('updateDoAdd', $record, $form)`).
+> - **Read the submitted values:** `$form->getData()` - by the time `updateDoAdd` fires, `FormRequestHandler::httpSubmission()` has already populated the form from the POST vars via `loadDataFrom()`, so `getData()` reflects the submission, not stale construction-time data (verified against `silverstripe/framework` and `silverstripe/cms` SS6 source: `CMSMainAddForm extends Form`, no override of the base submission flow). `Form::getRequestData()` does not exist in any SilverStripe version - do not use it.
+> - **Verify in the live CMS, not just a unit test that calls the hook method directly** - the wiring (which class the extension binds to) is exactly what silently breaks, and a direct method-call test passes regardless of the binding.
+>
+> Real-world hit: `dynamic/silverstripe-elemental-templates` (its template-picker "Step 3" dropdown), fixed in `dynamic/silverstripe-elemental-templates#83`/`#84`.
 
 ## Phase 7: Code Quality
 

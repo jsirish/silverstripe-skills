@@ -172,6 +172,7 @@ Module-specific checklist (the items that recur across `dynamic/*` modules):
 4. **`BaseElement::getType()` / `getDescription()`** are replaced by config: use `private static string $class_description` (and keep `$singular_name` / `$plural_name` config for the type label). Applies to every elemental content block module.
 5. **`ModelData` subclass overrides** of `__get`, `__set`, `__isset`, `hasField`, `getField`, `setField`, etc. must add the typed parameters and return types the SS6 parent declares, or PHP throws declaration-compatibility fatals.
 6. **`forTemplate()`** must declare `: string` and never return `false`; return `''` instead.
+7. **`CMSPageAddController`** was removed. Any extension bound to it (commonly via an `updatePageOptions(FieldList $fields)` hook) is dead code with **no error** - the extended class simply no longer exists, so the hook never fires. Rebind to `CMSMainAddForm::updateFields` and `CMSMain::updateDoAdd`. Full detail (the `RecordType` field rename, how to read submitted values, the live-CMS verification note) is in [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md)'s "SS6 Breaking Changes" section - this is the canonical source for SS6 breaking changes per Phase 4 above; do not restate it here.
 
 ```bash
 # Prove presence or absence of each pattern
@@ -180,6 +181,7 @@ rg "extends BaseElement" src/
 rg "function getType\(|function getDescription\(" src/
 rg "public function validate\(\)(?!\s*:)" src/ --pcre2
 rg "function forTemplate\(\)(?!\s*:)" src/ --pcre2
+rg "updatePageOptions" src/
 ```
 
 **Evidence gate (Phase 4):** paste the grep sweep output showing zero remaining hits for every old FQCN and untyped signature, run **after** the Rector pass in Phase 5 (Rector misses YAML, string class references, and docblocks).
