@@ -442,7 +442,7 @@ See the `visual-regression-upgrade` skill (from [jsirish/workflow-skills](https:
 >
 > **Embedfield replaced.** `nathancox/embedfield` has no SS6 version. Replace with `fromholdio/silverstripe-embedfield ^5.1`.
 >
-> **`CMSPageAddController` removed.** Any module extension bound to it (commonly an `updatePageOptions(FieldList $fields)` hook on the "Add new page" flow) is dead code with no error — the extended class no longer exists, so the hook never fires. Rebind to `SilverStripe\CMS\Forms\CMSMainAddForm` (`updateFields`, page-type field renamed to `RecordType`) and `SilverStripe\CMS\Controllers\CMSMain` (`updateDoAdd`). Full detail and a real-world hit in [silverstripe-module-ss6-upgrade](../silverstripe-module-ss6-upgrade/SKILL.md) Phase 4.
+> **`CMSPageAddController` removed.** Any module extension bound to it (commonly an `updatePageOptions(FieldList $fields)` hook on the "Add new page" flow) is dead code with no error - the extended class no longer exists, so the hook never fires. Rebind to `SilverStripe\CMS\Forms\CMSMainAddForm` (`updateFields`, page-type field renamed to `RecordType`) and `SilverStripe\CMS\Controllers\CMSMain` (`updateDoAdd`). Full detail and a real-world hit in [silverstripe-module-ss6-upgrade](../silverstripe-module-ss6-upgrade/SKILL.md) Phase 4.
 
 ## Phase 7: Code Quality
 
