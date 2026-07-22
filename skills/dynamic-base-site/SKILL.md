@@ -1,6 +1,6 @@
 ---
 name: dynamic-base-site
-description: Reference for Dynamic's Silverstripe base-site stack - the dynamic/silverstripe-base-site module set, per-version namespaces, extension locations (SS4 vs SS5+), and upgrade checklist. Use when working in a project that requires dynamic/silverstripe-base-site, when resolving "class not found" or namespace errors in a Dynamic base-site project, or when planning an upgrade of a base-site project. Triggers on "base-site", "base site stack", "Dynamic base site", or unfamiliar dynamic/* module questions.
+description: Reference for Dynamic's Silverstripe base-site stack - the dynamic/silverstripe-base-site module set, per-version namespaces (SS4 through SS6), extension locations, and upgrade checklist. Use when working in a project that requires dynamic/silverstripe-base-site, when resolving "class not found" or namespace errors in a Dynamic base-site project, or when planning an upgrade of a base-site project. Triggers on "base-site", "base site stack", "Dynamic base site", or unfamiliar dynamic/* module questions.
 ---
 
 # Dynamic Silverstripe Base-Site Stack
@@ -16,6 +16,22 @@ This skill documents the Dynamic base-site module ecosystem used in Silverstripe
 | `dynamic/silverstripe-site-tools` | Shared utilities, extensions, and helper classes |
 
 ## Namespace Changes by Version
+
+### Silverstripe 6 (dynamic/silverstripe-base-site:^8, branch `8`)
+- Namespaces are **unchanged from SS5**: `Dynamic\Base\*` (page types, models), `Dynamic\SiteTools\*`
+  (extensions, utilities). No PSR-4 migration needed for base-site's own classes - only SS6 core
+  framework classes moved (see [version-map-ss6.md](../silverstripe-version-upgrade/references/version-map-ss6.md)
+  for the core class renames, e.g. `ViewableData` → `ModelData`).
+- `SiteConfig`'s header nav (`UtilityLinks`) moves from a `many_many` join table
+  (`SiteConfig_UtilityLinks`) to a `has_many SiteTreeLink` relation via `silverstripe/linkfield ^5` -
+  same data-migration pattern as the general SS5→SS6 LinkField conversion. See
+  [data-migration-tasks.md](../silverstripe-version-upgrade/references/data-migration-tasks.md)
+  ("UtilityLinks" section) for the migration task.
+- SS6-relevant deprecations that hit base-site projects specifically: `sheadawson/silverstripe-linkable`
+  → `silverstripe/linkfield ^5` (run the linkable data migration on SS5 with linkfield `^4` **before**
+  the SS6 bump); `nswdpc/silverstripe-thereisnouserform` removed from the SS6 recipe (drop any
+  `UserDefinedFormPageExtension` registrations in `app/_config/essentials.yml` or `dev/build` fatals);
+  `undefinedoffset/silverstripe-nocaptcha` removed, no replacement.
 
 ### Silverstripe 5 (dynamic/silverstripe-base-site:^7)
 - Namespace: `Dynamic\BaseRecipe\*` (some classes)
@@ -58,7 +74,7 @@ Contains project-specific customizations:
 
 When upgrading major versions:
 
-1. **Check Recipe Config**: View the recipe's `app/_config/base-site-config.yml` to understand SS5 patterns
+1. **Check Recipe Config**: View the recipe's `app/_config/base-site-config.yml` to understand the current version's patterns
    ```bash
    cat vendor/dynamic/recipe-silverstripe-base-site/app/_config/base-site-config.yml
    ```
