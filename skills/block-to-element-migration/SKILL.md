@@ -1,20 +1,6 @@
 ---
 name: block-to-element-migration
-description: >
-  Migrate legacy SilverStripe blocks (sheadawson/silverstripe-blocks or
-  dynamic/dynamic-blocks) to SilverStripe Elemental during an SS3→SS4 (or
-  later) upgrade. Covers the migration BuildTask, the block-class →
-  element-class mapping catalog, the BlockArea → ElementalArea relation
-  mapping, the legacy-template → element-template duplication pattern
-  (preserving HTML/CSS verbatim), and the area-suffix template convention
-  for area-specific rendering (`Element_RelationName.ss`).
-
-  Use when:
-  - A project still has populated `SiteTree_Blocks` / `Block` tables
-  - Element templates render but the HTML doesn't match the legacy site
-  - You need different rendering of the same Element class in different
-    page areas (sidebar vs main content vs home-content)
-  - You're starting a new SS3→SS4 upgrade and want a proven workflow
+description: "Migrate legacy SilverStripe blocks (sheadawson/dynamic-blocks) to Elemental in an SS3→SS4+ upgrade: BuildTask, class/area mapping, template parity. Use when SiteTree_Blocks/Block tables are populated, element HTML mismatches legacy, or per-area rendering is needed."
 ---
 
 # Block → Element Migration
@@ -22,6 +8,16 @@ description: >
 A repeatable workflow for moving legacy SilverStripe Blocks (sheadawson or dynamic-blocks modules) into the modern Elemental system, while preserving exact visual parity with the pre-upgrade site.
 
 Distilled from three production migrations: **example-manufacturing**, **example-multiarea**, and **example-custom**. Each project re-invented the same skeleton — this skill captures the shared shape so you don't start from scratch.
+
+
+## When to use
+
+- A project still has populated `SiteTree_Blocks` / `Block` tables
+- Element templates render but the HTML doesn't match the legacy site
+- You need different rendering of the same Element class in different page areas (sidebar vs main content vs home-content)
+- You're starting a new SS3→SS4 upgrade and want a proven workflow
+
+This skill covers the migration BuildTask, the block-class → element-class mapping catalog, the BlockArea → ElementalArea relation mapping, the legacy-template → element-template duplication pattern (preserving HTML/CSS verbatim), and the area-suffix template convention for area-specific rendering (`Element_RelationName.ss`).
 
 ---
 
