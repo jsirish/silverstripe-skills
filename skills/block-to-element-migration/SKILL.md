@@ -1,6 +1,6 @@
 ---
 name: block-to-element-migration
-description: "Migrate legacy SilverStripe blocks (sheadawson/dynamic-blocks) to Elemental in an SS3→SS4+ upgrade: BuildTask, class/area mapping, template parity. Use when SiteTree_Blocks/Block tables are populated, element HTML mismatches legacy, or per-area rendering is needed."
+description: "Migrate legacy SilverStripe blocks (sheadawson/silverstripe-blocks, dynamic/dynamic-blocks) to Elemental in an SS3→SS4+ upgrade: BuildTask, class/area mapping, template parity. Use when SiteTree_Blocks/Block tables are populated, element HTML mismatches legacy, or per-area rendering is needed."
 ---
 
 # Block → Element Migration

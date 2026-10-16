@@ -1,6 +1,6 @@
 ---
 name: ss-data-migration
-description: "Run Silverstripe data-migration tasks after an SS4→SS5 or SS5→SS6 upgrade: sync production, dev/build, run each task with row-count verification. Use for \"run migration tasks\", \"migrate data\", \"sync and migrate\", \"run the SS6 migration\", \"test the linkfield migration\"."
+description: "Run Silverstripe data-migration tasks after an SS4→SS5 or SS5→SS6 upgrade: sync production, dev/build, run each task with row-count checks. Use for \"SS5 data migration\", \"migrate data\", \"rebuild a local site to match production\", \"after a database sync or deployment\", \"test the linkfield migration\"."
 ---
 
 # Silverstripe Data Migration (SS5 and SS6)
@@ -41,7 +41,7 @@ A step is done when you have pasted the task output and the verification query r
 | "Row count looks close enough" | Counts match exactly or every missing record is named (skipped class, intentional exclusion). If the task drops the source table on success, capture the source count **before** running. |
 | "The page renders, so live data is fine" | Query `_Live` and `_Versions` directly. Draft-only rows render in CMS preview and silently vanish on publish. |
 | "It ran on the last sync, so it will run on this one" | Re-run and paste this run's output. Fresh syncs reset source data; a one-shot task proves nothing about this database. |
-| "The homepage loads, so the migration is verified" | Run the full page sweep (SS6: step 4 below; SS5: the same sweep, see the SS4 → SS5 section) and paste the local/production status table. |
+| "The homepage loads, so the migration is verified" | Run the full page sweep (both versions: see Verify against production below; SS5: the same sweep, see the SS4 → SS5 section) and paste the local/production status table. |
 
 ## Per-task verification (required)
 
@@ -71,7 +71,7 @@ Commands and what each task does: [references/ss5-task-sequence.md](references/s
 
 **Deployment.** A local `rsync` push of migrated state is often more reliable than asking the remote to pull and compile: rsync `public/assets/` (carries the locally generated manipulation variants) and use a `.env`-backed `deploy.sh` to dump the migrated DB and sync assets, pushing the exact tested state.
 
-**Page sweep.** After the last task, run the same local-vs-production status sweep as step 4 of the SS5 → SS6 workflow below (one URL per page type, expect HTTP 200 on both) and browser-check the footer, navigation and slide-image links.
+**Page sweep.** After the last task, run the same local-vs-production status sweep as in Verify against production below (one URL per page type, expect HTTP 200 on both) and browser-check the footer, navigation and slide-image links.
 
 **Heuristic link verification.** After migrating structural links (obsolete `BlockLinkID` / flat `PageLinkID` columns → `LinkField` records), check site-specific hardcoded logic: custom templates or features that bypass standard Elemental structures (a slide-image header, a "Learn More" link) may lose their connection. Build small post-migration tasks to map known edge-case links.
 
@@ -104,15 +104,15 @@ Use `copyVersionToStage()` to publish **exactly one record without cascading**, 
 $record->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
 ```
 
-### Workflow
+## Workflow
 
-#### 1. Sync the production database
+### 1. Sync the production database
 
 Run the **`ddev-sync`** skill (`/workflow-skills:ddev-sync`): starts DDEV, `composer install`s, authorises SSH, pulls the production DB + assets via `sync.sh`.
 
 > **Why a fresh sync every time:** one-shot tasks (like the linkfield migration below) refuse to run if target records already exist and may **drop** source tables on success. To re-test them, start from a clean, un-migrated database.
 
-#### 2. Build the SS6 schema
+### 2. Build the SS6 schema
 
 ```bash
 ddev sake dev/build flush=1
@@ -120,7 +120,7 @@ ddev sake dev/build flush=1
 
 Adapts the down-synced SS5 schema to SS6 and creates the empty target tables the tasks write into (e.g. `LinkField_*`).
 
-#### 3. Run the migration tasks
+### 3. Run the migration tasks
 
 Discover the project's tasks rather than relying on a memorized list:
 
@@ -130,7 +130,7 @@ ddev sake tasks | grep -i 'migrat\|conversion\|convert'
 
 Any BuildTask subclass in `app/src/Task/` whose name contains `Migration` or `Conversion` belongs in this run. Run **each** in order; each self-guards. Every task gets its own `##### 3x` subsection with a **Verification (required)** block.
 
-##### 3a. Linkable to LinkField
+#### 3a. Linkable to LinkField
 
 The most common SS6 migration: every `sheadawson/linkable` link (`LinkableLink` table) moves to `silverstripe/linkfield` (`LinkField_*` tables).
 
@@ -160,7 +160,7 @@ Done when source count = draft count = live count, `_Versions` >= draft count, a
 
 > Add a new `##### 3x` subsection for any future SS6 migration task, each with its own before/after row-count **Verification (required)** block matching the 3a pattern.
 
-#### 4. Verify against production
+## Verify against production
 
 ```bash
 ddev sake dev/build flush=1
@@ -178,7 +178,7 @@ done
 
 Then browser-check link-bearing pages side by side with production: call-to-action buttons keep their styles, navigation works, elemental blocks render their links.
 
-#### Visual regression (optional)
+## Visual regression (optional)
 
 For automated pixel diffs between production and the upgrade, use the `visual-regression-upgrade` skill (from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills), installed separately):
 
@@ -201,7 +201,7 @@ python "$VR"/scripts/diff_report.py \
 
 When the local site looks like production with no regressions, the upgrade is verified against current content and the PR can be considered for merge.
 
-### Quality gates (optional but recommended)
+## Quality gates (optional but recommended)
 
 ```bash
 ddev exec vendor/bin/phpunit

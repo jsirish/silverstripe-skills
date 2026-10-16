@@ -1,6 +1,6 @@
 ---
 name: silverstripe-version-upgrade
-description: Complete workflow for upgrading Silverstripe CMS projects between major versions on the SS4+ line (e.g. SS4 → SS5, SS5 → SS6). Covers assessment, dependency updates, config migration, data migration tasks, testing, and deployment. For legacy SS3 → SS4 upgrades use the silverstripe-3-to-4-upgrade skill instead — that migration is structurally different.
+description: Workflow for upgrading Silverstripe CMS projects between major versions on the SS4+ line: "upgrade to SS6", "SS5 upgrade", SS4 → SS5. Covers assessment, dependencies, config, data migration tasks, testing, deploy. For SS3 → SS4 use silverstripe-3-to-4-upgrade.
 ---
 
 # Silverstripe Version Upgrade Skill
@@ -33,8 +33,8 @@ Every phase gate below requires evidence: the actual command output, not a recol
 | "The build passed, so the migration ran" | Run each migration task and paste its output, including row counts. `dev/build` succeeding proves nothing about task execution. |
 | "The vendor diff looks fine" | Run `ddev composer validate` and `ddev composer show --direct`, paste the output. Eyeballing `composer.lock` is not validation. |
 | "Tests probably still pass" | Run the suite (`ddev exec vendor/bin/phpunit`) and paste the summary line. No run, no claim. |
-| "The homepage loads, so the site works" | Curl one URL per page type and paste the HTTP codes (see Phase 6 and 10.4). One page proves one template. |
-| "dev/build ran without errors, so the schema is correct" | Paste the build output showing the table and field changes you expected. A silent build can mean silently ignored config (see `classname_value_remapping`). |
+| "The homepage loads, so the site works" | Curl one URL per page type and paste the HTTP codes (see Phase 6 and [production-deploy.md](references/production-deploy.md) 10.4). One page proves one template. |
+| "dev/build ran without errors, so the schema is correct" | Paste the build output showing the table and field changes you expected. A silent build can mean silently ignored config (see `classname_value_remapping` in [ss6-breaking-changes.md](references/ss6-breaking-changes.md)). |
 | "That warning is probably pre-existing" | Grep the pre-upgrade branch for the same warning and paste both results. Confirmed pre-existing or it is yours. |
 
 ## Phase 1: Assessment & Discovery
@@ -142,7 +142,7 @@ Key areas:
 
 ### SS6 Configuration Migration
 
-SS6 has mandatory code and config changes that fail loudly (PHP fatals) or silently (ignored config). Work through [references/ss6-breaking-changes.md](references/ss6-breaking-changes.md): class renames, typed signatures, BuildTask `execute()`, `forTemplate(): string`, `getDescription()` removal, DDEV `SS_DATABASE_SERVER=db`, TinyMCE extraction, Linkable → LinkField template API, silent config breakers (`classname_value_remapping`, password validator, session cookies), and the removed `CMSPageAddController`.
+SS6 has mandatory code and config changes that fail loudly (PHP fatals) or silently (ignored config). Work through [references/ss6-breaking-changes.md](references/ss6-breaking-changes.md): class renames, typed signatures, BuildTask `execute()`, `forTemplate(): string`, `getDescription()` removal, DDEV `SS_DATABASE_SERVER=db`, TinyMCE extraction, Linkable → LinkField template API, silent config breakers (`classname_value_remapping`, `SeoExtension` removal, password validator, session cookies), the Linkable and Embedfield package replacements, and the removed `CMSPageAddController`.
 
 ## Phase 5: Data Migration
 
