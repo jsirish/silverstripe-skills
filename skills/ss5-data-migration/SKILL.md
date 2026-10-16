@@ -31,13 +31,7 @@ less guidance). Prefer the slash command as the canonical, human-facing runbook;
 thin workflow file only if you also want a one-keystroke auto-runner.
 
 > [!NOTE]
-> **`devbuild.sh` = cache rebuild only; `migrate.sh` = the task runner.** Keep the two
-> separate. `devbuild.sh` should be the 3-line cache-rebuild script (clear
-> `silverstripe-cache`, recreate it, `dev/build`) that DeployHQ runs after a code deploy —
-> it must never run migration tasks. The ordered migration tasks below belong in a separate
-> `migrate.sh` (or this `/migrate` command), invoked manually after a fresh prod sync.
-> Conflating them causes a double `dev/build` in full-loop scripts and re-runs data
-> migrations on routine deploys.
+> **`devbuild.sh` = cache rebuild only; `migrate.sh` = the task runner.** Keep the two separate: the ordered migration tasks below belong in `migrate.sh` (or this `/migrate` command), invoked manually after a fresh prod sync, never in the `devbuild.sh` that DeployHQ runs on every deploy. See [devbuild-vs-migrate.md](../silverstripe-version-upgrade/references/devbuild-vs-migrate.md).
 
 Minimal `.claude/commands/migrate.md` starter — fill in the task list from the workflow below:
 
