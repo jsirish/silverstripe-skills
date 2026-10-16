@@ -106,6 +106,8 @@ $record->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
 
 ## Workflow
 
+Steps 2 and 3 are written for SS5 → SS6 (the SS4 → SS5 task commands are in that section); steps 1 and the verification sections below apply to both.
+
 ### 1. Sync the production database
 
 Run the **`ddev-sync`** skill (`/workflow-skills:ddev-sync`): starts DDEV, `composer install`s, authorises SSH, pulls the production DB + assets via `sync.sh`.
@@ -128,7 +130,7 @@ Discover the project's tasks rather than relying on a memorized list:
 ddev sake tasks | grep -i 'migrat\|conversion\|convert'
 ```
 
-Any BuildTask subclass in `app/src/Task/` whose name contains `Migration` or `Conversion` belongs in this run. Run **each** in order; each self-guards. Every task gets its own `##### 3x` subsection with a **Verification (required)** block.
+Any BuildTask subclass in `app/src/Task/` whose name contains `Migration` or `Conversion` belongs in this run. Run **each** in order; each self-guards. Every task gets its own `#### 3x` subsection with a **Verification (required)** block.
 
 #### 3a. Linkable to LinkField
 
@@ -158,7 +160,7 @@ ddev mysql -e "SELECT COUNT(*) FROM LinkField_Link;
 
 Done when source count = draft count = live count, `_Versions` >= draft count, and the task reported `0 broken links`. Any delta gets explained link by link.
 
-> Add a new `##### 3x` subsection for any future SS6 migration task, each with its own before/after row-count **Verification (required)** block matching the 3a pattern.
+> Add a new `#### 3x` subsection for any future SS6 migration task, each with its own before/after row-count **Verification (required)** block matching the 3a pattern.
 
 ## Verify against production
 
