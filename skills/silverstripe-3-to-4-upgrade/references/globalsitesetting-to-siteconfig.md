@@ -8,8 +8,8 @@ scalars and two nav relations — off the removed `GlobalSiteSetting` and onto t
 > **Don't hand-recreate `GlobalSiteSetting` as a custom DataObject.** That's a dead-end that has to be
 > unwound later. Adopt the base-site `SiteConfig` extensions and migrate the legacy data into them.
 
-This is the SS3→SS4 analogue of the `ss5-data-migration` skill's `migrate-footer-links` /
-`NavigationMigrationTask`. Patterns distilled from a production `GlobalSiteSettingMigrationTask`
+This is the SS3→SS4 analogue of the `ss-data-migration` skill's SS5 task sequence (`migrate-footer-links` /
+`NavigationMigrationTask`). Patterns distilled from a production `GlobalSiteSettingMigrationTask`
 (work that landed late and looked like it had never been migrated at all — the reason
 this is now captured reusably).
 
@@ -192,7 +192,7 @@ not-yet-migrated rows.
 
 ## See also
 
-- `ss5-data-migration` — the SS5-line analogue (`migrate-footer-links`, `NavigationMigrationTask`).
+- `ss-data-migration` — the SS5-line analogue (`migrate-footer-links`, `NavigationMigrationTask`).
 - `silverstripe-3-to-4-upgrade/references/block-to-elemental-migration.md` — the idempotent raw-SQL
   `BuildTask` pattern (`$segment`, marker-based idempotency, `_obsolete_` handling) this doc builds on.
 - `dynamic/silverstripe-base-site` — provides the `SiteConfig` settings + navigation natively; adopt it
