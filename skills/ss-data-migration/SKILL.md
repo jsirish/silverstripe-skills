@@ -41,7 +41,7 @@ A step is done when you have pasted the task output and the verification query r
 | "Row count looks close enough" | Counts match exactly or every missing record is named (skipped class, intentional exclusion). If the task drops the source table on success, capture the source count **before** running. |
 | "The page renders, so live data is fine" | Query `_Live` and `_Versions` directly. Draft-only rows render in CMS preview and silently vanish on publish. |
 | "It ran on the last sync, so it will run on this one" | Re-run and paste this run's output. Fresh syncs reset source data; a one-shot task proves nothing about this database. |
-| "The homepage loads, so the migration is verified" | Run the full page sweep (step 4 of the SS6 workflow; same idea for SS5) and paste the local/production status table. |
+| "The homepage loads, so the migration is verified" | Run the full page sweep (SS6: step 4 below; SS5: the same sweep, see the SS4 → SS5 section) and paste the local/production status table. |
 
 ## Per-task verification (required)
 
@@ -70,6 +70,8 @@ The Dynamic Agency Base Site task order is a baseline; your project's list will 
 Commands and what each task does: [references/ss5-task-sequence.md](references/ss5-task-sequence.md) (a worked example from the Base Site architecture; treat the task names as examples).
 
 **Deployment.** A local `rsync` push of migrated state is often more reliable than asking the remote to pull and compile: rsync `public/assets/` (carries the locally generated manipulation variants) and use a `.env`-backed `deploy.sh` to dump the migrated DB and sync assets, pushing the exact tested state.
+
+**Page sweep.** After the last task, run the same local-vs-production status sweep as step 4 of the SS5 → SS6 workflow below (one URL per page type, expect HTTP 200 on both) and browser-check the footer, navigation and slide-image links.
 
 **Heuristic link verification.** After migrating structural links (obsolete `BlockLinkID` / flat `PageLinkID` columns → `LinkField` records), check site-specific hardcoded logic: custom templates or features that bypass standard Elemental structures (a slide-image header, a "Learn More" link) may lose their connection. Build small post-migration tasks to map known edge-case links.
 
