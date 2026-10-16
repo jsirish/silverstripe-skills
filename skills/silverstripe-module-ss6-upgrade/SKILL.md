@@ -1,6 +1,6 @@
 ---
 name: silverstripe-module-ss6-upgrade
-description: Module-level (composer package) Silverstripe 6 upgrade workflow for silverstripe-vendormodule repos with their own CI. Use when upgrading a single module such as dynamic/silverstripe-calendar or dynamic/silverstripe-elemental-accordion to SS6, cutting a new integer branch, bumping framework constraints to ^6 and PHP to ^8.3, running the SS6 code sweep, updating gha-ci and PHPUnit config, tagging a release, and flipping the default branch. For upgrading a full project (a website root with recipes and DDEV) use the silverstripe-version-upgrade skill instead.
+description: Upgrade a single Silverstripe composer module (vendormodule repo with its own CI) from SS5 to SS6 - new integer branch, ^6 and PHP ^8.3 constraints, code sweep, gha-ci, tag. Use for "upgrade this module to SS6". For full websites use silverstripe-version-upgrade.
 ---
 
 # Silverstripe Module SS6 Upgrade
@@ -13,9 +13,9 @@ Repeatable workflow for upgrading a **single Silverstripe module** (a `silverstr
 > - [ss-data-migration](../ss-data-migration/SKILL.md): **DB content** migration after a project upgrade.
 > - This skill: the **module** loop (constraints, code sweep, CI, tag, default branch).
 >
-> Branch-naming and default-branch conventions come from [ss-branch-strategy](https://github.com/jsirish/workflow-skills/tree/main/skills/ss-branch-strategy) (from `jsirish/workflow-skills`); this skill applies that convention, it does not redefine it.
+> Branch-naming and default-branch conventions come from [ss-branch-strategy](https://github.com/jsirish/workflow-skills/tree/main/skills/ss-branch-strategy) (from `jsirish/workflow-skills`); this skill applies that convention, it does not redefine it. That skill lives in a separate repo and must be installed alongside this one.
 
-Reference implementation for Phases 1-4 and 7: [dynamic/silverstripe-calendar#112](https://github.com/dynamic/silverstripe-calendar/issues/112) (branch `2` to `3`, tagged `3.0.0`). Its branch `3` does NOT yet demonstrate Phases 3.4/6 (recipe-testing still `^3`, PHPUnit 9 config, no CI run recorded); treat those phases as prescriptive, not descriptive.
+Reference implementation for Phases 1-4 and 7: [dynamic/silverstripe-calendar#112](https://github.com/dynamic/silverstripe-calendar/issues/112) (branch `2` to `3`, tagged `3.0.0`). Phases 3.4 and 6 are prescriptive guidance, not drawn from that reference.
 
 ## Upgrade Phases (Summary)
 
