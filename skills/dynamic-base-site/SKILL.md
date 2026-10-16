@@ -1,6 +1,6 @@
 ---
 name: dynamic-base-site
-description: Reference for Dynamic's Silverstripe base-site stack - the dynamic/silverstripe-base-site module set, per-version namespaces (SS4 through SS6), extension locations, and upgrade checklist. Use when working in a project that requires dynamic/silverstripe-base-site, when resolving "class not found" or namespace errors in a Dynamic base-site project, or when planning an upgrade of a base-site project. Triggers on "base-site", "base site stack", "Dynamic base site", or unfamiliar dynamic/* module questions.
+description: Reference for Dynamic's dynamic/silverstripe-base-site stack - modules, namespaces by SS4-SS6, extension locations, upgrade checklist. Use for "base-site" or "Dynamic base site" projects, class-not-found or namespace errors in them, or planning their upgrade.
 ---
 
 # Dynamic Silverstripe Base-Site Stack
@@ -34,9 +34,10 @@ This skill documents the Dynamic base-site module ecosystem used in Silverstripe
   `undefinedoffset/silverstripe-nocaptcha` removed, no replacement.
 
 ### Silverstripe 5 (dynamic/silverstripe-base-site:^7)
-- Namespace: `Dynamic\BaseRecipe\*` (some classes)
-- Namespace: `Dynamic\Base\*` (page types, models)
+- Namespace: `Dynamic\Base\*` (page types, models, base-site extensions)
 - Namespace: `Dynamic\SiteTools\*` (extensions, utilities)
+- `dynamic/recipe-silverstripe-base-site` declares a `Dynamic\BaseRecipe\` autoload prefix but ships no
+  `src/` classes (config and `app/` scaffolding only), so a `Dynamic\BaseRecipe\...` class reference will not resolve.
 
 ### Silverstripe 4 (dynamic/silverstripe-base-site:^4)
 - Namespace: `Dynamic\Base\*` (all classes)
@@ -45,7 +46,7 @@ This skill documents the Dynamic base-site module ecosystem used in Silverstripe
 
 Extensions may move between `silverstripe-base-site` and `silverstripe-site-tools` in major versions:
 
-| Extension | SS5 Location | Notes |
+| Extension | SS5 Location (SS6 locations not verified) | Notes |
 |-----------|--------------|-------|
 | `TemplateDataExtension` | `Dynamic\Base\Extension` | For SiteConfig |
 | `ReviewContentDataExtension` | `Dynamic\SiteTools\Extension` | For SiteConfig |
@@ -88,8 +89,9 @@ When upgrading major versions:
    - `CompanyDataExtension` - removed in SS5
    - `IntegrationsDataExtension` - removed in SS5
 
-4. **Namespace Updates**: Check for namespace changes
-   - `Dynamic\Base` → `Dynamic\BaseRecipe` in some classes
+4. **Namespace Updates**: Base-site classes stay in `Dynamic\Base\*` and site-tools classes in `Dynamic\SiteTools\*`;
+   a reference to `Dynamic\BaseRecipe\*` is wrong (see the SS5 section above). Use the extension table's
+   location column to fix a wrong `Dynamic\Base` vs `Dynamic\SiteTools` prefix.
 
 5. **Third-Party Replacements**: Custom code often gets replaced:
    - FlexSlider → Carousel (`dynamic/carousel`)
