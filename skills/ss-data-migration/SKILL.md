@@ -9,7 +9,7 @@ description: "Run Silverstripe data-migration tasks after an SS4→SS5 or SS5→
 
 After a major-version upgrade, a synced production database still holds data in the old formats. This skill is the **repeatable** procedure to take a fresh production sync, run every required data-migration task against it in order, and confirm the local site matches production. Run it whenever you re-sync the database while the upgrade PR is in progress, and as the rehearsal for the UAT / production deploy.
 
-Version-specific parts: [SS4 → SS5](#ss4--ss5) and [SS5 → SS6](#ss5--ss6). Everything outside those two sections applies to both.
+Version-specific parts: [SS4 → SS5](#ss4--ss5) and [SS5 → SS6](#ss5--ss6). The Workflow section (steps 2-3 are SS6-specific), Verify against production, Visual regression, and Quality gates apply to both; the sections before the version split do too.
 
 Throughout, `{project}` is the DDEV project name (local site at `https://{project}.ddev.site`) and `{production-domain}` is the live site.
 
@@ -41,7 +41,7 @@ A step is done when you have pasted the task output and the verification query r
 | "Row count looks close enough" | Counts match exactly or every missing record is named (skipped class, intentional exclusion). If the task drops the source table on success, capture the source count **before** running. |
 | "The page renders, so live data is fine" | Query `_Live` and `_Versions` directly. Draft-only rows render in CMS preview and silently vanish on publish. |
 | "It ran on the last sync, so it will run on this one" | Re-run and paste this run's output. Fresh syncs reset source data; a one-shot task proves nothing about this database. |
-| "The homepage loads, so the migration is verified" | Run the full page sweep (both versions: see Verify against production below; SS5: the same sweep, see the SS4 → SS5 section) and paste the local/production status table. |
+| "The homepage loads, so the migration is verified" | Run the full page sweep (see Verify against production below; it applies to both versions) and paste the local/production status table. |
 
 ## Per-task verification (required)
 

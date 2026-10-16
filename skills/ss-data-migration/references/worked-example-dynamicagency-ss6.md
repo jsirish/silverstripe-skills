@@ -19,7 +19,7 @@ to that repo). The concrete values used there, as a reference implementation:
   linkfield `Style` field via `Dynamic\Agency\Extension\LinkStyleExtension`
   (permanent, kept after cleanup).
 - **Expected result at time of writing:** `23 links migrated, 0 broken links`.
-- **Page sweep (step 4):** `/`, `/about/about-us`, `/web-content-media-dynamic`,
+- **Page sweep (Verify against production):** `/`, `/about/about-us`, `/web-content-media-dynamic`,
   `/work/{case-study}`, `/community/giving-back`,
   `/about/careers/open-positions`, `/about/news`.
 - **Spot check:** `/about/about-us` Single Feature link renders with

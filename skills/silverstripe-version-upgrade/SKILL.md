@@ -1,6 +1,6 @@
 ---
 name: silverstripe-version-upgrade
-description: Workflow for upgrading Silverstripe CMS projects between major versions on the SS4+ line: "upgrade to SS6", "SS5 upgrade", SS4 → SS5. Covers assessment, dependencies, config, data migration tasks, testing, deploy. For SS3 → SS4 use silverstripe-3-to-4-upgrade.
+description: "Workflow for upgrading Silverstripe CMS projects between major versions on the SS4+ line: \"upgrade to SS6\", \"SS5 upgrade\", SS4 → SS5. Covers assessment, dependencies, config, data migration tasks, testing, deploy. For SS3 → SS4 use silverstripe-3-to-4-upgrade."
 ---
 
 # Silverstripe Version Upgrade Skill
