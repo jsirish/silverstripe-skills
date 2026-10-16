@@ -20,7 +20,7 @@ Production is the single source of truth for content (see the `ddev-sync` skill)
 ## Prerequisites
 
 - On the upgrade branch, DDEV running, SSH keys available for the production sync.
-- The codebase is fully deployed and `dev/build` has completed successfully.
+- SS4 → SS5: the codebase is fully deployed, `dev/build` has completed successfully, and (locally) you have synced the latest production database (e.g. `ddev sync`). The SS5 → SS6 workflow below does the sync and `dev/build` itself in steps 1-2.
 
 ## Project-specific `/migrate` command
 
@@ -59,7 +59,7 @@ SELECT COUNT(*) FROM Element_Versions;
 - **Tasks that write unversioned config or relations** (footer links, navigation settings, link fixes): count the target table before and after, and paste the task's own changed/skipped summary.
 - **Asset tasks with no row-count target** (gallery resample): paste the task output showing files processed, and spot-check one resampled variant on the frontend.
 
-For versioned targets, draft and `_Live` counts match for published content and `_Versions` is at least the draft count. Record the counts in the project's `/migrate` runbook under "Expected outputs" as a baseline for the next run. An automated run owes the same evidence: capture each task's output and the queries in the run log; exit code 0 alone does not clear the gate.
+For versioned targets, draft and `_Live` counts match for published content and `_Versions` is at least the draft count. Record the counts in the project's `/migrate` runbook under "Expected outputs" as a baseline for the next run. An automated run owes the same evidence: capture each task's output and the queries in the run log; exit code 0 alone does not clear the gate. Run tasks one at a time and confirm each exits successfully before starting the next.
 
 ## SS4 → SS5
 
@@ -218,7 +218,7 @@ For CI, add `.github/workflows/ci.yml` to run these gates on every PR; an exampl
 | Symptom | Cause / Fix |
 |---|---|
 | Task fails with a memory or timeout error | Raise PHP limits, or run the task via the browser interface instead of the CLI. |
-| Task not listed by `ddev sake tasks` | Missing `is_enabled: true` in the migration YAML (SS6), or cache not flushed: run `dev/build flush=1`. Always append `flush=1` to task commands. |
+| Task not listed by `ddev sake tasks` | SS6: missing `is_enabled: true` in the migration YAML, or cache not flushed (run `dev/build flush=1`). SS5: append `flush=1` to each task command. |
 | `Cannot perform migration with existing silverstripe/linkfield link records` (SS6) | The task already ran on this DB. Re-`ddev-sync` for a clean state. |
 | `Couldn't find join table for many_many relation` (SS6) | A declared many_many join table is missing: DB not freshly synced, or `dev/build` not run. |
 | Links render but unstyled (`class=""`) (SS6) | Button-style mapping missing, or `dev/build` not run after editing the migration YAML. |

@@ -2,8 +2,6 @@
 
 Companion to the SS4 → SS5 section of [SKILL.md](../SKILL.md). This is the Dynamic Agency Base Site task order; task names and count vary per project. Run in this sequence to guarantee data integrity.
 
-The migration tasks must be run in the following sequence to guarantee data integrity.
-
 ## 1. Block Migration
 Migrates legacy Elemental blocks to the SS5 standard Element structures.
 **Command:** `ddev sake dev/tasks/block-migration "flush=1"`
