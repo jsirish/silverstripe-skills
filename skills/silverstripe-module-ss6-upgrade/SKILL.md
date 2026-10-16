@@ -153,7 +153,7 @@ Also drop unused requirements while you are in the file; the reference implement
 
 ## Phase 4: Code Sweep
 
-The canonical SS6 rename and breaking-change tables live in [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md) (Phase 4 and the "SS6 Breaking Changes" section) and [references/version-map-ss6.md](../silverstripe-version-upgrade/references/version-map-ss6.md). Do not restate them; run them against the module's `src/` and `tests/` instead of `app/src/`:
+The canonical SS6 rename and breaking-change tables live in [ss6-breaking-changes.md](../silverstripe-version-upgrade/references/ss6-breaking-changes.md) (renames, typed signatures, config breakers, removals) and [references/version-map-ss6.md](../silverstripe-version-upgrade/references/version-map-ss6.md). Do not restate them; run them against the module's `src/` and `tests/` instead of `app/src/`:
 
 ```bash
 # Namespace renames (each old FQCN is a runtime fatal in SS6)
@@ -168,11 +168,11 @@ Module-specific checklist (the items that recur across `dynamic/*` modules):
 
 1. **`ArrayList`** moved to `SilverStripe\Model\List\ArrayList`; `ArrayData` to `SilverStripe\Model\ArrayData`; `ViewableData` is now `SilverStripe\Model\ModelData`.
 2. **`ValidationResult`** moved to `SilverStripe\Core\Validation\ValidationResult`, and every `validate()` override must declare the return type: `public function validate(): ValidationResult`.
-3. **BuildTask signature**: `run($request)` becomes `execute(InputInterface $input, PolyOutput $output): int` returning `Command::SUCCESS`, with `protected static string $commandName`. The full old-vs-new table and a task template are in [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md) Phase 4 and its [references/data-migration-tasks.md](../silverstripe-version-upgrade/references/data-migration-tasks.md).
+3. **BuildTask signature**: `run($request)` becomes `execute(InputInterface $input, PolyOutput $output): int` returning `Command::SUCCESS`, with `protected static string $commandName`. The full old-vs-new table is in [ss6-breaking-changes.md](../silverstripe-version-upgrade/references/ss6-breaking-changes.md#buildtask-signature-change) and a task template in [references/data-migration-tasks.md](../silverstripe-version-upgrade/references/data-migration-tasks.md).
 4. **`BaseElement::getType()` / `getDescription()`** are replaced by config: use `private static string $class_description` (and keep `$singular_name` / `$plural_name` config for the type label). Applies to every elemental content block module.
 5. **`ModelData` subclass overrides** of `__get`, `__set`, `__isset`, `hasField`, `getField`, `setField`, etc. must add the typed parameters and return types the SS6 parent declares, or PHP throws declaration-compatibility fatals.
 6. **`forTemplate()`** must declare `: string` and never return `false`; return `''` instead.
-7. **`CMSPageAddController`** was removed. Any extension bound to it (commonly via an `updatePageOptions(FieldList $fields)` hook) is dead code with **no error** - the extended class simply no longer exists, so the hook never fires. Rebind to `CMSMainAddForm::updateFields` and `CMSMain::updateDoAdd`. Full detail (the `RecordType` field rename, how to read submitted values, the live-CMS verification note) is in [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md)'s "SS6 Breaking Changes" section - this is the canonical source for SS6 breaking changes per Phase 4 above; do not restate it here.
+7. **`CMSPageAddController`** was removed. Any extension bound to it (commonly via an `updatePageOptions(FieldList $fields)` hook) is dead code with **no error** - the extended class simply no longer exists, so the hook never fires. Rebind to `CMSMainAddForm::updateFields` and `CMSMain::updateDoAdd`. Full detail (the `RecordType` field rename, how to read submitted values, the live-CMS verification note) is in the "Package and extension-point removals" section of [ss6-breaking-changes.md](../silverstripe-version-upgrade/references/ss6-breaking-changes.md#package-and-extension-point-removals) - the canonical source for SS6 breaking changes; do not restate it here.
 
 ```bash
 # Prove presence or absence of each pattern
