@@ -157,7 +157,7 @@ class MigrateExampleTask extends BuildTask
 > - `$title` / `$description` are typed properties (string or static string)
 > - Return `Command::SUCCESS` (0) or `Command::FAILURE` (1)
 
-**Template API cross-reference:** See "Theme template API changes: Linkable → LinkField" in the [silverstripe-version-upgrade SKILL.md](../SKILL.md) for the template-level migration reference table (`$Link` → `$URL`, `$OpenInNewWindow` → `$OpenInNew`, etc.).
+**Template API cross-reference:** See "Theme template API changes: Linkable → LinkField" in [ss6-breaking-changes.md](ss6-breaking-changes.md) for the template-level migration reference table (`$Link` → `$URL`, `$OpenInNewWindow` → `$OpenInNew`, etc.).
 
 ### 5.2 Key Migration Principles
 

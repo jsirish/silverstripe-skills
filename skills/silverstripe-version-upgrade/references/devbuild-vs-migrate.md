@@ -23,5 +23,3 @@ The ordered data-migration tasks live in a separate `migrate.sh`, or in the proj
 
 - **No double `dev/build`.** A full-loop script that runs an explicit `dev/build` and then `ddev exec ./devbuild.sh` builds twice if `devbuild.sh` also runs `dev/build` plus tasks. Worse, migration tasks then run in a context that only meant to rebuild cache.
 - **"Build" is not "migrate."** DeployHQ deploys code and rebuilds cache; it should never fire migration tasks. Conflating the two means a routine deploy silently re-runs data migrations.
-
-Worked history: two projects settled on the 3-line `devbuild.sh`; an early project shipped about 50 lines of tasks and SQL inside it and hit exactly the double-build / re-migrate trap.
