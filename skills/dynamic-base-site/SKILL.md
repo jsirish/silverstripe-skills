@@ -26,7 +26,7 @@ This skill documents the Dynamic base-site module ecosystem used in Silverstripe
   (`SiteConfig_UtilityLinks`) to a `has_many SiteTreeLink` relation via `silverstripe/linkfield ^5` -
   same data-migration pattern as the general SS5→SS6 LinkField conversion. See
   [data-migration-tasks.md](../silverstripe-version-upgrade/references/data-migration-tasks.md)
-  ("UtilityLinks" section) for the migration task.
+  ("UtilityLinks" entry) for the migration task.
 - SS6-relevant deprecations that hit base-site projects specifically: `sheadawson/silverstripe-linkable`
   → `silverstripe/linkfield ^5` (run the linkable data migration on SS5 with linkfield `^4` **before**
   the SS6 bump); `nswdpc/silverstripe-thereisnouserform` removed from the SS6 recipe (drop any

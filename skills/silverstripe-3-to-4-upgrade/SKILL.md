@@ -155,6 +155,13 @@ SS4 heavily relies on PHP namespaces.
 1. **Namespacing**: Add namespaces to all classes in `app/src/` (e.g., `namespace App\Pages;` or `namespace Dynamic\Base\Page;`).
 2. **Add PSR-4 autoload to `composer.json`** — required for the namespaced classes to load:
 
+   ```json
+   "autoload": {
+     "psr-4": { "App\\": "app/src/" }
+   }
+   ```
+   Also add a `classmap` for the global `Page` and `PageController` (see [references/key-discoveries.md](references/key-discoveries.md)).
+
 > [!TIP]
 > **Automate namespace migration with silverstripe-rector**: Instead of adding namespaces manually, use `wernerkrauss/silverstripe-rector` to automate the bulk of the work. After requiring it (see dev-dependencies above), configure `rector.php` and run:
 > ```bash
@@ -163,12 +170,6 @@ SS4 heavily relies on PHP namespaces.
 > ```
 > This handles class-rename patterns, PSR-4 restructuring, and many SS3 deprecation fixes that are tedious to do by hand. See [github.com/wernerkrauss/silverstripe-rector](https://github.com/wernerkrauss/silverstripe-rector) for available rule sets.
 
-
-   ```json
-   "autoload": {
-     "psr-4": { "App\\": "app/src/" }
-   }
-   ```
 3. **DB ClassName Remapping** (`DatabaseAdmin.classname_value_remapping`): map every SS3 short class name stored in the database to its SS4 namespaced equivalent. It runs during `dev/build`, rewrites `ClassName` across every DataObject table (including `_Live` and `_Versions`), and is idempotent. Without it, pages fall back to `Page.ss` or render blank. Enumerate the values to remap with `SELECT DISTINCT ClassName` on `SiteTree` and `EditableFormField`. Don't write custom SQL to fix `ClassName`; `ParentClass` is the one column it does not cover. Config example, query commands and caveats: [references/classname-remapping.md](references/classname-remapping.md).
 4. **SSViewer themes config** — include `$public` and `$default` so vendor module templates resolve:
    ```yaml
@@ -207,7 +208,7 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
    ```bash
    ddev sake dev/tasks/form-parent-migration
    ```
-   *Note: Resolves un-namespaced ClassNames on EditableFormField records to prevent publishRecursive crashes.*
+   *Note: Fixes un-namespaced `ParentClass` values on EditableFormField records (`ClassName` is handled by `classname_value_remapping`) to prevent publishRecursive crashes.*
 
 2. **Migrate Files to Hash-Based Storage**
    ```bash

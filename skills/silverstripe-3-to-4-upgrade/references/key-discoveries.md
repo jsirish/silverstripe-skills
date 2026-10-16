@@ -27,7 +27,7 @@
 > **Raw SQL is Mandatory**: When migrating from SS3 modules that are removed in SS4 (like `dynamic-blocks`), the ORM strips legacy `$db` properties. You cannot rely on `$block->Title` during migration. You must query the legacy `Block` and `Block_Live` tables using raw `DB::query()` and `INSERT ON DUPLICATE KEY UPDATE` into the new Elemental records.
 
 > [!TIP]
-> **PublishRecursive Dangers**: Running `publishRecursive()` on a root page will validate all child elements, including forms. If a UserForms setup has obsolete SS3 class names in the database (e.g., `EditableEmailField` instead of `SilverStripe\UserForms\Model\EditableFormField\EditableEmailField`), the publish will fatal error. Always write a migration task to fix `ClassName` rows in the DB before publishing.
+> **PublishRecursive Dangers**: Running `publishRecursive()` on a root page will validate all child elements, including forms. If a UserForms setup has obsolete SS3 class names in the database (e.g., `EditableEmailField` instead of `SilverStripe\UserForms\Model\EditableFormField\EditableEmailField`), the publish will fatal error. Make sure `classname_value_remapping` covers these `ClassName` values before publishing (see [classname-remapping.md](classname-remapping.md)); a task is only needed for `ParentClass`.
 
 > [!IMPORTANT]
 > **Image Resize Methods**: `jonom/focuspoint` is rarely carried over to SS4. Update template tags from `$Image.FocusFill()` to `$Image.Fill(X, Y)` or native SS4 crop functions.
