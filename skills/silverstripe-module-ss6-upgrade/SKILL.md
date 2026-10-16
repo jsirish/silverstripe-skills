@@ -10,7 +10,7 @@ Repeatable workflow for upgrading a **single Silverstripe module** (a `silverstr
 > **Scope**: This skill covers the **module/package** upgrade loop. It is one of three related skills:
 >
 > - [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md): full **project** upgrades (a website root: recipes, DDEV, data migration, deployment). Its SS6 sections are the canonical reference for namespace renames and breaking changes; this skill points there instead of restating them.
-> - [ss6-data-migration](../ss6-data-migration/SKILL.md): **DB content** migration after a project upgrade.
+> - [ss-data-migration](../ss-data-migration/SKILL.md): **DB content** migration after a project upgrade.
 > - This skill: the **module** loop (constraints, code sweep, CI, tag, default branch).
 >
 > Branch-naming and default-branch conventions come from [ss-branch-strategy](https://github.com/jsirish/workflow-skills/tree/main/skills/ss-branch-strategy) (from `jsirish/workflow-skills`); this skill applies that convention, it does not redefine it.
@@ -323,5 +323,5 @@ Then exercise the module:
 ## Related skills
 
 - [silverstripe-version-upgrade](../silverstripe-version-upgrade/SKILL.md): the project-level SS6 upgrade this skill feeds into; canonical home of the SS6 rename tables, breaking changes, and version maps.
-- [ss6-data-migration](../ss6-data-migration/SKILL.md): DB content migration after the project upgrade.
+- [ss-data-migration](../ss-data-migration/SKILL.md): DB content migration after the project upgrade.
 - [ss-branch-strategy](https://github.com/jsirish/workflow-skills/tree/main/skills/ss-branch-strategy) (from `jsirish/workflow-skills`): the integer-branch, default-branch, and fork-and-upstream conventions applied in Phases 2 and 7.

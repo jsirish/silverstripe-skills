@@ -542,5 +542,5 @@ Recipes follow `recipe-cms` major version numbering. Elemental modules follow th
 ## Related skills
 
 - [silverstripe-3-to-4-upgrade](../silverstripe-3-to-4-upgrade/SKILL.md) — the prior, structurally different leg. Use it for legacy SS3 → SS4 projects before this skill applies.
-- [ss5-data-migration](../ss5-data-migration/SKILL.md) / [ss6-data-migration](../ss6-data-migration/SKILL.md) — version-specific data-migration runbooks for the BuildTasks in Phase 5.
+- [ss-data-migration](../ss-data-migration/SKILL.md) — SS5 and SS6 data-migration runbooks for the BuildTasks in Phase 5.
 - `visual-regression-upgrade` (from [jsirish/workflow-skills](https://github.com/jsirish/workflow-skills), installed separately) — capture pixel diffs against the legacy instance to confirm parity (also referenced inline in the Build & Verify phase).

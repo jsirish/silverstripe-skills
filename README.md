@@ -21,8 +21,7 @@ Gemini CLI, Cursor, Cline, Amp, and others).
 
 | Skill | What it does |
 |-------|-------------|
-| `ss5-data-migration` | Execute Silverstripe 5 data migration tasks (sync, dev/build, run each task with row-count verification). |
-| `ss6-data-migration` | The Silverstripe 6 upgrade data-migration workflow (sync production, migrate, verify against production). |
+| `ss-data-migration` | Run data-migration tasks after an SS4→SS5 or SS5→SS6 upgrade (sync production, dev/build, run each task with row-count verification, verify against production). |
 | `block-to-element-migration` | Migrate legacy Blocks-module data (sheadawson or dynamic/dynamic-blocks) into Elemental elements during an SS3 to SS4+ upgrade: the block-to-element class map, area relation mapping, and template duplication pattern. |
 
 ### Base-site reference
