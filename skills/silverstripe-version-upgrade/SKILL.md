@@ -119,54 +119,7 @@ ddev composer vendor-expose
 
 ### SS6 Variant
 
-For SS6 upgrades, adapt the branch and dependency steps:
-
-```bash
-git checkout -b feature/silverstripe-6-upgrade
-
-# Verify PHP version — SS6 requires PHP 8.3+
-ddev php -v | grep -oP 'PHP \K[0-9]+\.[0-9]+'
-# Must be 8.3 or higher — update .ddev/config.yaml if needed
-# Change "php": "^8.1" to "php": "^8.3" in composer.json
-
-# Update core recipe
-ddev composer require silverstripe/recipe-cms:^3 dynamic/recipe-silverstripe-base-site:^8 --no-update
-
-# Update elemental packages (branch 6 for most elemental modules)
-ddev composer require dynamic/silverstripe-elemental-accordion:^6.0 --no-update
-
-# Add SS6-required packages that SS5 had as transitive
-ddev composer require silverstripe/htmleditor-tinymce:^1.0 --no-update
-
-# Replace deprecated packages (linkfield 4.x is CMS 5 only; the SS6 line is 5.x.
-# Run the linkable data migration on SS5 with linkfield ^4 BEFORE this bump)
-ddev composer require --no-update silverstripe/linkfield:^5.0
-ddev composer remove --no-update sheadawson/silverstripe-linkable
-
-# Remove incompatible
-ddev composer remove --no-update nathancox/embedfield
-
-# Resolve
-ddev composer update --with-all-dependencies
-ddev composer vendor-expose
-```
-
-> **Recipe-first:** When consuming the Dynamic Essentials ecosystem, require only the root recipe:
-> `ddev composer require dynamic/recipe-silverstripe-essentials-website:^3@dev`
-> The recipe's `@dev` constraints cascade the entire tree automatically. Individual module
-> constraints are only needed if forcing source install via `preferred-install: dynamic/*: source`.
-
-> **`silverstripe/vendor-plugin` bump:** SS6 Dynamic modules require `^3`. If the project root pins `^2.0` (SS5 default), Composer will conflict. Apply before running `composer update`:
-> ```bash
-> ddev composer require silverstripe/vendor-plugin:^3 --no-update
-> ```
-
-> [!WARNING]
-> **SS6 blocker — `silverstripeltd/betamask`:** `silverstripeltd/betamask ^0.0.1` requires `silverstripe/admin ^2.1` (SS5-only). Check for an SS6-compatible release before removing it:
-> ```bash
-> ddev composer show -a silverstripeltd/betamask   # check for an SS6-compatible release
-> ddev composer remove silverstripeltd/betamask    # if none found
-> ```
+SS6 changes the branch name, PHP floor (8.3), recipe versions, and swaps several packages (linkfield `^5`, `htmleditor-tinymce`, no Linkable/embedfield). The commands and blockers are in [references/ss6-dependencies.md](references/ss6-dependencies.md). The phase gate below applies to SS6 too.
 
 **Evidence gate (Phase 3):** before moving to config migration, paste the output of:
 
@@ -189,158 +142,7 @@ Key areas:
 
 ### SS6 Configuration Migration
 
-#### Namespace and class renames
-
-SS6 relocated several core framework classes. Every `use` statement referencing an old FQCN causes a PHP fatal error at runtime (often first surfacing on `dev/build`). Grep for each old name and replace:
-
-| Old (SS5) | New (SS6) |
-|-----------|-----------|
-| `SilverStripe\View\ViewableData` | `SilverStripe\Model\ModelData` |
-| `SilverStripe\View\ArrayData` | `SilverStripe\Model\ArrayData` |
-| `SilverStripe\ORM\ArrayList` | `SilverStripe\Model\List\ArrayList` |
-| `SilverStripe\ORM\ValidationResult` | `SilverStripe\Core\Validation\ValidationResult` |
-| `SilverStripe\ORM\ValidationException` | `SilverStripe\Core\Validation\ValidationException` |
-
-```bash
-# Run each grep across app code, module code, and theme code
-rg "SilverStripe\\\\View\\\\ViewableData" app/src/ src/ themes/*/code/
-rg "SilverStripe\\\\View\\\\ArrayData" app/src/ src/ themes/*/code/
-rg "SilverStripe\\\\ORM\\\\ArrayList" app/src/ src/ themes/*/code/
-rg "SilverStripe\\\\ORM\\\\ValidationResult" app/src/ src/ themes/*/code/
-rg "SilverStripe\\\\ORM\\\\ValidationException" app/src/ src/ themes/*/code/
-```
-
-The `wernerkrauss/silverstripe-rector` SS6 level set automates most of these renames (see [references/code-quality.md](references/code-quality.md)), but always run the greps afterward: string references in config YAML, `Injector` definitions, and docblocks are not rewritten by Rector.
-
-#### Typed signature requirements
-
-Two related changes cause PHP declaration-compatibility fatals if missed:
-
-- **`validate()` overrides must declare the return type.** Any `DataObject` subclass overriding `validate()` must use `public function validate(): ValidationResult` (with the new `SilverStripe\Core\Validation\ValidationResult` import). PHP throws a fatal declaration-compatibility error otherwise.
-- **`ModelData` magic-method overrides must match parent signatures.** Subclasses of `ModelData` (formerly `ViewableData`) that override `__get`, `__set`, `__isset`, `hasField`, `getField`, `setField`, etc. must add the typed parameters and return types the SS6 parent declares.
-
-```bash
-# Find validate() overrides missing the return type
-rg "public function validate\(\)(?!\s*:)" app/src/ src/ --pcre2
-
-# Find ModelData subclasses, then inspect their overridden magic methods
-rg "extends ModelData|extends ViewableData" app/src/ src/
-```
-
-#### BuildTask signature change
-SS6 changes `run($request)` → `execute(InputInterface, PolyOutput): int` returning `Command::SUCCESS`.
-
-Key differences:
-| SS4/SS5 | SS6 |
-|---------|-----|
-| `protected $title = '...'` | `protected string $title = '...'` |
-| `protected $description = '...'` | `protected static string $description = '...'` |
-| `private static $segment = '...'` | `protected static string $commandName = '...'` (required) |
-| `public function run($request)` | `protected function execute(InputInterface $input, PolyOutput $output): int` |
-| `echo` / `$this->log()` | `$output->writeln()` |
-| Implicit return | `return Command::SUCCESS` |
-
-#### forTemplate() return type enforcement
-SS6 enforces `: string` return type on `forTemplate()`. Never return `false` — return `` (empty string) instead.
-
-```php
-// SS5 (still works but triggers deprecation)
-public function forTemplate() { return false; }
-
-// SS6
-public function forTemplate(): string { return ''; }
-```
-
-#### BaseElement::getDescription() removed
-SS6 Elemental removed `BaseElement::getDescription()`. Use `private static string $class_description` instead:
-
-```php
-// SS5
-public function getDescription() { return "My element"; }
-
-// SS6
-private static string $class_description = "My element";
-```
-
-#### DDEV database socket config
-SS6 defaults to MySQL unix socket connections. DDEV uses TCP, so add to `.ddev/config.yaml`:
-
-```yaml
-web_environment:
-  - SS_DATABASE_SERVER=db
-```
-
-Without this, `dev/build` fails with "Connection refused."
-
-#### TinyMCE extraction
-SS6 extracted TinyMCE from `silverstripe/admin` into `silverstripe/htmleditor-tinymce ^1.0`. If missing, the CMS Content field silently degrades to a plain textarea (`data-editor="textarea"` instead of `data-editor="tinyMCE"`).
-
-> [!NOTE]
-> **Essentials recipe exception:** in Essentials SS6 recipe projects the package arrives transitively through the recipe, and an explicit require causes conflicts — check `composer why silverstripe/htmleditor-tinymce` before adding it (see the `silverstripe-essentials-website` skill).
-
-**Fix:** Add to `composer.json` under `require` (not `require-dev`):
-```json
-"silverstripe/htmleditor-tinymce": "^1.0"
-```
-
-**Diagnostic:**
-```javascript
-document.querySelector('[data-editor]').dataset.editor
-// Returns "textarea" instead of "tinyMCE" → missing package
-```
-
-#### Theme template API changes: Linkable → LinkField
-
-When migrating from `sheadawson/silverstripe-linkable` to `silverstripe/linkfield`:
-
-| Linkable (SS5) | Linkfield (SS6) | Notes |
-|----------------|-----------------|-------|
-| `$Link` | `$URL` | `getURL()` not `getLink()` |
-| `$LinkURL` | `$URL` | Consistent — use `$URL` |
-| `$OpenInNewWindow` | `$OpenInNew` | Renamed attribute |
-| `$MenuTitle` | `$Title` | Different semantics — `getMenuTitle()` returns type label |
-| `$Site` (SocialLink) | `$SocialChannel` | Enum → varchar mapping |
-| `$X.setStyle('classes')` | Explicit `<a class="...">` | Linkfield renders bare links |
-| `<% loop $HasOneLink %>` | `<% with $HasOneLink %>` | has_one is not iterable in SS6 |
-| `$ElementLink.LinkURL` | `$ElementLink.URL` | Namespace change on sub-properties |
-
-#### SS6 silent config breakers
-
-**SeoExtension removal** — Remove from `SiteTree.extensions` if using a third-party search provider:
-```yaml
-SilverStripe\CMS\Model\SiteTree:
-  extensions:
-    - Dynamic\Base\Extension\SeoExtension  # REMOVE — causes PHP worker hangs in SS6
-```
-
-**PasswordValidator** — SS6 defaults to `EntropyPasswordValidator`. Old `RulesPasswordValidator` config is silently ignored:
-```yaml
-# SS6 format (NOT the old min_test_score / test_names pattern)
-SilverStripe\Security\PasswordValidator:
-  password_strength: 3  # 0-4 scale
-```
-
-**Session cookie defaults** — SS6 sets `SameSite=Strict`, `cookie_secure=true`. All existing sessions invalidated on first deploy — expected and normal. Verify:
-```bash
-curl -sI https://site.example.com/ | grep -i 'set-cookie'
-# Expected: PHPSESSID=...; path=/; secure; HttpOnly; SameSite=Strict
-```
-
-**`classname_value_remapping` YAML key renamed** — In SS4/5 the key was `SilverStripe\ORM\DatabaseAdmin`. In SS6 the class no longer exists; use `SilverStripe\Dev\Command\DbBuild` instead. Using the old key is **silently ignored** — `dev/build` runs without error but no remapping occurs, leaving legacy class names in the DB and causing "obsolete type" warnings in the CMS for every affected page.
-
-```yaml
-# SS4/SS5 (WRONG in SS6 — silently ignored)
-SilverStripe\ORM\DatabaseAdmin:
-  classname_value_remapping:
-    OldClass: NewClass
-
-# SS6 (correct)
-SilverStripe\Dev\Command\DbBuild:
-  classname_value_remapping:
-    OldClass: NewClass
-```
-
-After correcting the key, a single `dev/build flush=1` migrates all affected rows in both `SiteTree` and `SiteTree_Live`. The build output will confirm: *"Correcting obsolete ClassName values for N outdated types."* Side effect: migrated pages gain a draft/live diff and show as MODIFIED — republish them afterward.
+SS6 has mandatory code and config changes that fail loudly (PHP fatals) or silently (ignored config). Work through [references/ss6-breaking-changes.md](references/ss6-breaking-changes.md): class renames, typed signatures, BuildTask `execute()`, `forTemplate(): string`, `getDescription()` removal, DDEV `SS_DATABASE_SERVER=db`, TinyMCE extraction, Linkable → LinkField template API, silent config breakers (`classname_value_remapping`, password validator, session cookies), and the removed `CMSPageAddController`.
 
 ## Phase 5: Data Migration
 
@@ -405,51 +207,14 @@ See the `visual-regression-upgrade` skill (from [jsirish/workflow-skills](https:
 
 ## Key Discoveries & Gotchas
 
-> [!WARNING]
-> **Raw SQL Data Migrations:** When migrating from deprecated or obsoleted modules (such as legacy `dynamic/silverstripe-blocks`), the modern ORM will **not** map legacy database columns (like `$db` properties) because the field definitions have been removed from the class. You must rely on raw `DB::query()` calls to preserve and remap data (e.g., copying old `PageLinkID` fields directly into new `LinkField` instances).
+SS4 → SS5 data and template gotchas (raw-SQL migrations, empty layout containers, AJAX lazy loading, Title/SubTitle duplication, `httpError()`, `fractas/elemental-stylings` prefixes) are in [references/ss5-gotchas.md](references/ss5-gotchas.md). The SS6 equivalents are in [references/ss6-breaking-changes.md](references/ss6-breaking-changes.md).
 
-> [!NOTE]
-> **Empty Layout Containers:** During block to element mapping, migrating structural containers (like Accordions or Promo galleries) that have exactly *0* items within them is intentional. Preserving the empty wrapper maintains its hierarchical placement in the DOM so editors can populate it post-upgrade without losing context.
+Quick symptom index for SS6 (details in the reference):
 
-> [!TIP]
-> **AJAX Lazy Loading Optimization:** Pre-generating Image asset manipulations (e.g., `ScaleWidth` or `Fill`) and employing AJAX lazy-loading on heavily populated pages (such as dense galleries) is required. Rendering 200+ raw Image objects in a single PHP payload causes hard pre-prod timeouts in SS5. *Note: in SS5, `PageController::init()` will still fire on AJAX endpoints unless explicitly bypassed.*
-
-> [!IMPORTANT]
-> **Data duplication / Subtitle:** The unified templates in SS5 ElementContent might render both `Title` and `SubTitle` domains redundantly. SS4 layouts that abused DB columns to handle split headings will show duplicate lines post-migration unless the legacy entries are scrubbed.
-
-> [!NOTE]
-> **SS5 `httpError()`:** The `httpError()` routine in SS5 throws an `HTTPResponse_Exception`. Following the call with a simple `return` aids static analysis flow and squashes PHP linting notices without impacting application state.
-
-> [!WARNING]
-> **Elemental Styles & `fractas/elemental-stylings`:** In SS4, the `fractas/elemental-stylings` module prefixed the elemental style values with `style-` (e.g., `style-modal`, `style-blue`). In SS5, native styles are used, and `getStyleVariant()` returns the raw value (e.g., `modal`). If templates or SCSS rely on the `style-` prefix, you must either update the templates/SCSS, update the values in the database, OR write a simple `updateStyleVariant` DataExtension to re-apply the prefix.
-
-## SS6 Breaking Changes
-
-> [!WARNING]
-> **Core classes renamed in SS6.** `ViewableData` → `ModelData`, `ArrayData` moved to `SilverStripe\Model`, `ArrayList` → `SilverStripe\Model\List\ArrayList`, `ValidationResult` → `SilverStripe\Core\Validation\ValidationResult`. Every `use` statement referencing an old FQCN is a fatal error at runtime. Systematic grep, one per rename: see Phase 4.
->
-> **Typed signatures enforced in SS6.** `validate()` overrides need `: ValidationResult`; `ModelData` subclasses overriding `__get`, `hasField`, `__isset`, etc. need typed parameters and return types matching the parent. Both are PHP declaration-compatibility fatals if missed. See Phase 4.
->
-> **BuildTask signature changed in SS6.** `run($request)` → `execute(InputInterface $input, PolyOutput $output): int` returning `Command::SUCCESS`. All custom BuildTask subclasses must be updated.
->
-> **TinyMCE extracted.** `silverstripe/htmleditor-tinymce ^1.0` must be in `require` (not `require-dev`). If missing, CMS Content fields silently degrade to plain textareas — no error, no console warning.
->
-> **`classname_value_remapping` YAML key changed.** SS6 renamed `SilverStripe\ORM\DatabaseAdmin` → `SilverStripe\Dev\Command\DbBuild`. The old key is silently ignored — remapping never runs, pages keep obsolete class names. Fix the YAML key and re-run `dev/build flush=1`.
->
-> **DB connection default changed.** SS6 defaults to unix socket. DDEV requires `SS_DATABASE_SERVER=db` in `.ddev/config.yaml`.
->
-> **Linkable removed.** `sheadawson/silverstripe-linkable` has no SS6 version. Replace with `silverstripe/linkfield ^5` (the 4.x line is CMS 5 only; run the linkable data migration on SS5 with linkfield `^4` BEFORE the SS6 bump). Template API changes documented above.
->
-> **Embedfield replaced.** `nathancox/embedfield` has no SS6 version. Replace with `fromholdio/silverstripe-embedfield ^5.1`.
->
-> **`CMSPageAddController` removed.** Any module extension bound to it (commonly an `updatePageOptions(FieldList $fields)` hook on the "Add new page" flow) is dead code with no error - the extended class no longer exists, so the hook never fires.
->
-> - **Add fields to the add form:** extend `SilverStripe\CMS\Forms\CMSMainAddForm` with `updateFields(FieldList $fields)`. The page-type field is now named `RecordType` (was `PageType`), an `OptionsetField` - insert after it.
-> - **Act on create:** extend `SilverStripe\CMS\Controllers\CMSMain` with `updateDoAdd(DataObject $record, Form $form)` (`CMSMainAddForm::doAdd()` fires `$controller->extend('updateDoAdd', $record, $form)`).
-> - **Read the submitted values:** `$form->getData()` - by the time `updateDoAdd` fires, `FormRequestHandler::httpSubmission()` has already populated the form from the POST vars via `loadDataFrom()`, so `getData()` reflects the submission, not stale construction-time data (verified against `silverstripe/framework` and `silverstripe/cms` SS6 source: `CMSMainAddForm extends Form`, no override of the base submission flow). `Form::getRequestData()` does not exist in any SilverStripe version - do not use it.
-> - **Verify in the live CMS, not just a unit test that calls the hook method directly** - the wiring (which class the extension binds to) is exactly what silently breaks, and a direct method-call test passes regardless of the binding.
->
-> Real-world hit: `dynamic/silverstripe-elemental-templates` (its template-picker "Step 3" dropdown), fixed in `dynamic/silverstripe-elemental-templates#83`/`#84`.
+- **All users logged out** on first deploy: `SameSite=Strict` session cookie default. Expected.
+- **TinyMCE missing** → plain textarea: add `silverstripe/htmleditor-tinymce ^1.0` to `require`.
+- **Migration tasks not found:** `dev/build flush=1` not yet run, or `commandName` missing from the Symfony Console task.
+- **Custom `forTemplate()` crashes:** add `: string` return type.
 
 ## Phase 7: Code Quality
 
@@ -469,54 +234,7 @@ Deploy to UAT, run migration tasks, verify frontend and CMS, troubleshoot.
 
 ## Phase 10: Production
 
-### 10.1 Deployment sequencing decision
-
-If your SS6 upgrade also bundles AI modules, pre-1.0 packages, or other high-risk additions, consider splitting into **two deploys** — SS6 cutover first, followed by the new modules. Stacking pre-release packages on a cutover deploy increases blast radius and makes rollback more complex.
-
-### 10.2 DeployHQ (or comparable CD) repoint
-
-The deploy branch must be changed from the old SS5 branch (e.g., `4` or `5`) to `master` (SS6). Do this **right before deploying**, not in advance — the old branch is the rollback target.
-
-**Pre-deploy checks:**
-
-```bash
-# Verify composer install succeeds
-composer install --no-dev
-
-# Verify all runtime deps are in "require", not "require-dev"
-# Notably: silverstripe/htmleditor-tinymce must be in "require"
-composer show --direct | grep htmleditor
-```
-
-**Private repo access:** If the upgrade adds modules from private GitHub repos (e.g., `silverstripeltd/ai-*`), ensure the production server has an SSH deploy key with read access to the organization before cutover day. Test with a manual `composer install` if possible.
-
-### 10.3 Database strategy
-
-**Option A (recommended): Push local/UAT DB to prod before cutover.** Run migrations locally, then use `deploy.sh --db` to push the already-migrated database to production. No migration tasks needed on prod — it's a drop-in replacement.
-
-**Option B: Run migration on production's existing DB.** Deploy SS6 code, run `dev/build flush=1`, then run each migration task sequentially. Riskier — if a migration fails mid-way, the site is partially broken and requires schema repair.
-
-### 10.4 Post-deploy smoke test
-
-```bash
-# Key pages load
-for u in / /work /blog /admin/ /about/about-us; do
-  curl -sI "https://$DOMAIN$u" | head -3
-done
-
-# Verify no redirect loop
-curl -sI "https://$DOMAIN/" | grep -c "301\|302"  # should be 0
-
-# Verify CMS renders (WYSIWYG check — log in, edit a page)
-# Expected: data-editor="tinyMCE" on Content field
-```
-
-### 10.5 Expected post-deploy behaviors
-
-- **All users logged out** on first deploy — SS6's `SameSite=Strict` session cookie default invalidates existing sessions. Normal and expected.
-- **TinyMCE missing** → plain textarea — add `silverstripe/htmleditor-tinymce ^1.0` to `require`.
-- **Migration tasks not found** `dev/build flush=1` not yet run, or `commandName` property missing from the Symfony Console task.
-- **Custom `forTemplate()` methods crash** — add `: string` return type.
+Sequencing decision, DeployHQ repoint, database strategy, post-deploy smoke test, and expected post-deploy behaviors are in [references/production-deploy.md](references/production-deploy.md). Read it before the first production deploy.
 
 ## Reference Documentation
 
@@ -526,6 +244,11 @@ curl -sI "https://$DOMAIN/" | grep -c "301\|302"  # should be 0
 | SS5 Version Map | [version-map.md](references/version-map.md) |
 | SS6 Version Map | [version-map-ss6.md](references/version-map-ss6.md) |
 | Code Quality | [code-quality.md](references/code-quality.md) |
+| SS6 dependency changes | [ss6-dependencies.md](references/ss6-dependencies.md) |
+| SS6 breaking changes | [ss6-breaking-changes.md](references/ss6-breaking-changes.md) |
+| SS5 gotchas | [ss5-gotchas.md](references/ss5-gotchas.md) |
+| Production deploy (Phase 10) | [production-deploy.md](references/production-deploy.md) |
+| devbuild.sh vs migrate.sh | [devbuild-vs-migrate.md](references/devbuild-vs-migrate.md) |
 
 ## Recipe Branch Convention (SS6)
 

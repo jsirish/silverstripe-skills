@@ -94,7 +94,7 @@
 
 ### Core Class Renames (SS5 → SS6)
 
-Each old FQCN is a fatal error at runtime in SS6. Grep for every one (see Phase 4 of the SKILL for the grep commands):
+Each old FQCN is a fatal error at runtime in SS6. Grep for every one (grep commands: [ss6-breaking-changes.md](ss6-breaking-changes.md#namespace-and-class-renames)):
 
 | Old (SS5) | New (SS6) |
 |-----------|-----------|

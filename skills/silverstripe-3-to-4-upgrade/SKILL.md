@@ -289,26 +289,7 @@ Run the following tasks sequentially. Custom tasks (`BlockMigrationTask`, `FormP
 ## Phase 8: Build & Verify
 
 > [!IMPORTANT]
-> **`devbuild.sh` is cache-rebuild-only — keep migration tasks out of it.** DeployHQ runs
-> `devbuild.sh` after every code deploy, so it must do nothing but clear the cache and
-> rebuild the schema. The canonical version is three lines:
-> ```bash
-> #!/usr/bin/env bash
-> rm -rf silverstripe-cache
-> mkdir silverstripe-cache
-> vendor/bin/sake dev/build
-> ```
-> Data-migration tasks belong in a **separate `migrate.sh`** (or the `/migrate` slash
-> command — see [Phase 6](#phase-6-data-migration-tasks)), invoked manually after a fresh
-> prod sync. Two reasons:
-> - **No double `dev/build`.** A full-loop script that runs an explicit `dev/build` and
->   then `ddev exec ./devbuild.sh` will build twice if `devbuild.sh` also runs `dev/build`
->   plus tasks — and worse, run migration tasks in a context that only meant to rebuild cache.
-> - **"Build" ≠ "migrate."** DeployHQ deploys code and rebuilds cache; it should never fire
->   migration tasks. Conflating the two means a routine deploy silently re-runs data
->   migrations. (Both `example-manufacturing` and `example-multiarea` settled on the 3-line
->   `devbuild.sh`; an early `example-custom` shipped 50 lines of tasks + SQL inside it and hit
->   exactly this double-build/re-migrate trap.)
+> **`devbuild.sh` is cache-rebuild-only; migration tasks go in a separate `migrate.sh` (or the `/migrate` slash command, see [Phase 6](#phase-6-data-migration-tasks)).** DeployHQ runs `devbuild.sh` after every code deploy, so it must never run data migrations. The 3-line canonical script and the reasoning are in [devbuild-vs-migrate.md](../silverstripe-version-upgrade/references/devbuild-vs-migrate.md).
 
 1. **Run dev/build**:
    ```bash

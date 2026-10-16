@@ -16,13 +16,7 @@ auto-runner.)
 
 ## Conventions this template assumes
 
-- **`devbuild.sh` = cache rebuild only** (3 lines: clear `silverstripe-cache`, recreate
-  it, `dev/build`). DeployHQ runs this after a code deploy — it must **never** run
-  migration tasks. See [Phase 8](../SKILL.md#phase-8-build--verify).
-- **`migrate.sh` = the task runner** — the ordered data-migration tasks, invoked manually
-  (or by this `/migrate` command) after a fresh prod sync. Keeping the two separate avoids
-  a double `dev/build` when a full-loop script calls both, and keeps "rebuild cache" from
-  being conflated with "migrate data."
+- **`devbuild.sh` = cache rebuild only; `migrate.sh` = the task runner** (ordered data-migration tasks, invoked manually or by this `/migrate` command after a fresh prod sync). Rationale and the canonical 3-line `devbuild.sh`: [devbuild-vs-migrate.md](../../silverstripe-version-upgrade/references/devbuild-vs-migrate.md).
 
 ---
 
